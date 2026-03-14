@@ -215,56 +215,58 @@ function Calculator() {
 
 // ── FUNNEL ──
 function FunnelChart() {
-  const max = 150;
+  const data = [
+    { name: 'Sourcing', Traditional: 15, Optimized: 7 },
+    { name: 'Screening', Traditional: 10, Optimized: 5 },
+    { name: 'Interview', Traditional: 15, Optimized: 15 },
+    { name: 'Offer', Traditional: 5, Optimized: 3 },
+  ];
+
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 02 — Funnel Analysis</p>
-      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 2rem" }}>Hiring Funnel Optimizer</h2>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
-        {[
-          { label: "Time-to-Hire", old: "45 days", new: "30 days", delta: "-33%", color: "#C8A97E" },
-          { label: "Cost-per-Hire", old: "$3,200", new: "$2,400", delta: "-25%", color: "#74C476" },
-          { label: "Offer Accept Rate", old: "50–60%", new: "75–85%", delta: "+25%", color: "#7EB5A6" },
-          { label: "Quality of Hire", old: "7.2 / 10", new: "9.0 / 10", delta: "+25%", color: "#9B8EC4" },
-        ].map(m => (
-          <div key={m.label} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1.25rem" }}>
-            <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>{m.label}</div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "0.75rem" }}>
-              <div>
-                <div style={{ color: "#444", fontSize: "0.85rem", textDecoration: "line-through" }}>{m.old}</div>
-                <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.4rem", fontWeight: 700 }}>{m.new}</div>
-              </div>
-              <div style={{ color: m.color, fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: "1.1rem" }}>{m.delta}</div>
-            </div>
-          </div>
-        ))}
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ marginBottom: "2rem" }}>
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 02 — Process Optimization</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Hiring Funnel Velocity</h2>
+        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 600 }}>
+          Optimizing the recruitment timeline from 45 days to 30 days. By compressing the sourcing and screening stages, we maintain interview rigor while securing top talent faster.
+        </p>
       </div>
 
-      <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: "1.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><div style={{ width: 12, height: 12, background: "#333", borderRadius: 2 }} /><span style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>Traditional</span></div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><div style={{ width: 12, height: 12, background: "#C8A97E", borderRadius: 2 }} /><span style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>Pulse Optimized</span></div>
+      <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem 1rem 1rem 0", height: 350, marginBottom: "2rem" }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+            <XAxis dataKey="name" stroke="#555" tick={{ fill: '#888', fontSize: 12, fontFamily: "'DM Mono', monospace" }} />
+            <YAxis stroke="#555" tick={{ fill: '#888', fontSize: 12, fontFamily: "'DM Mono', monospace" }} />
+            <Tooltip 
+              contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px', fontFamily: "'DM Mono', monospace", fontSize: '0.8rem', color: '#FFF' }}
+              itemStyle={{ color: '#E0E0E0' }} cursor={{ fill: '#222' }}
+            />
+            <Legend wrapperStyle={{ fontFamily: "'DM Mono', monospace", fontSize: '0.8rem', paddingTop: '10px' }} />
+            <Bar dataKey="Traditional" name="Traditional (Days)" fill="#2A2A2A" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Optimized" name="Optimized (Days)" fill="#C8A97E" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
+        <div style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 6, padding: "1.5rem" }}>
+          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Previous Baseline</div>
+          <div style={{ color: "#888", fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>45 <span style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "'DM Mono', monospace" }}>days</span></div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", minWidth: 500 }}>
-          {FUNNEL_DATA.map((row, i) => (
-            <div key={row.stage}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-                <span style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>{row.stage}</span>
-                <span style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>Day {row.day_trad} → Day {row.day_opt}</span>
-              </div>
-              <div style={{ position: "relative", height: 20 }}>
-                <div style={{ position: "absolute", top: 0, left: 0, width: `${(row.traditional / max) * 100}%`, height: "100%", background: "#252525", borderRadius: 2, transition: "width 1s ease" }} />
-                <div style={{ position: "absolute", top: 4, left: 0, width: `${(row.optimized / max) * 100}%`, height: 12, background: "#C8A97E", borderRadius: 2, opacity: 0.9, transition: "width 1s ease" }} />
-                <span style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)", color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>{row.traditional} vs {row.optimized}</span>
-              </div>
-            </div>
-          ))}
+        <div style={{ background: "rgba(200, 169, 126, 0.05)", border: "1px solid rgba(200, 169, 126, 0.3)", borderRadius: 6, padding: "1.5rem" }}>
+          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Optimized Target</div>
+          <div style={{ color: "#C8A97E", fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>30 <span style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "'DM Mono', monospace" }}>days</span></div>
+        </div>
+        <div style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 6, padding: "1.5rem" }}>
+          <div style={{ color: "#74C476", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Efficiency Gain</div>
+          <div style={{ color: "#74C476", fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>33<span style={{ fontSize: "1.5rem", fontWeight: 400 }}>%</span></div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
+
 
 // ── SALARY ──
 function SalaryBench() {
