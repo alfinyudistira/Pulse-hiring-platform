@@ -358,27 +358,54 @@ function Scorecard() {
   const [round, setRound] = useState("Round 1");
   const [scores, setScores] = useState({});
   const [notes, setNotes] = useState({});
+  const [isBlindMode, setIsBlindMode] = useState(false); 
+  
   const decision = getDecision(scores);
   const allFilled = COMPETENCIES.every(c => scores[c.id] !== undefined);
 
   const handlePrint = () => window.print();
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 04 — Interview Evaluation</p>
-      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 2rem" }}>Interview Scorecard Generator</h2>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
+      style={{ maxWidth: 900, margin: "0 auto" }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "0.5rem", flexWrap: "wrap", gap: "1rem" }}>
+        <div>
+          <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 04 — Interview Evaluation</p>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Interview Scorecard</h2>
+        </div>
+        
+        {/* Tombol Blind Mode */}
+        <button onClick={() => setIsBlindMode(!isBlindMode)} style={{
+          background: isBlindMode ? "#C8A97E" : "#111", border: `1px solid ${isBlindMode ? "#C8A97E" : "#2A2A2A"}`,
+          color: isBlindMode ? "#0D0D0D" : "#888", padding: "0.6rem 1rem", borderRadius: 6,
+          fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer",
+          marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", transition: "all 0.3s"
+        }}>
+          {isBlindMode ? "👁️‍🗨️ BLIND MODE: ON" : "👁️ BLIND MODE: OFF"}
+        </button>
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
-        {[
-          { label: "Candidate Name", val: candidate, set: setCandidate, ph: "Full Name" },
-          { label: "Interviewer", val: interviewer, set: setInterviewer, ph: "Your Name" },
-        ].map(f => (
-          <div key={f.label}>
-            <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>{f.label}</label>
-            <input value={f.val} onChange={e => f.set(e.target.value)} placeholder={f.ph}
-              style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", width: "100%", boxSizing: "border-box" }} />
-          </div>
-        ))}
+        <div>
+          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Candidate Name</label>
+          <input value={candidate} onChange={e => setCandidate(e.target.value)} placeholder="Full Name"
+            style={{ 
+              background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", 
+              padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", 
+              width: "100%", boxSizing: "border-box",
+              filter: isBlindMode && candidate ? "blur(5px)" : "none",
+              transition: "filter 0.3s ease"
+            }} 
+            disabled={isBlindMode}
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Interviewer</label>
+          <input value={interviewer} onChange={e => setInterviewer(e.target.value)} placeholder="Your Name"
+            style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", width: "100%", boxSizing: "border-box" }} />
+        </div>
         <div>
           <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Interview Round</label>
           <select value={round} onChange={e => setRound(e.target.value)}
@@ -392,7 +419,7 @@ function Scorecard() {
 
       <div style={{ display: "grid", gap: "0.75rem", marginBottom: "2rem" }}>
         {COMPETENCIES.map(c => (
-          <div key={c.id} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1rem 1.25rem" }}>
+          <motion.div whileHover={{ scale: 1.01 }} key={c.id} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1rem 1.25rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: notes[c.id] !== undefined ? "0.75rem" : 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <span>{c.icon}</span>
@@ -408,7 +435,7 @@ function Scorecard() {
                     background: scores[c.id] >= n ? c.color : "#1A1A1A",
                     border: `1px solid ${scores[c.id] >= n ? c.color : "#2E2E2E"}`,
                     color: scores[c.id] >= n ? "#0D0D0D" : "#555",
-                    fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer"
+                    fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: "0.8rem", cursor: "pointer", transition: "all 0.2s"
                   }}>{n}</button>
                 ))}
                 <button onClick={() => setNotes(n => ({ ...n, [c.id]: n[c.id] !== undefined ? undefined : "" }))}
@@ -422,16 +449,16 @@ function Scorecard() {
                 placeholder="Observed behaviors / evidence..."
                 style={{ background: "#0D0D0D", border: "1px solid #2A2A2A", borderRadius: 4, color: "#AAA", padding: "0.5rem 0.75rem", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: 60 }} />
             )}
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {allFilled && (
-        <div style={{ background: "#111", border: `2px solid ${decision.color}`, borderRadius: 8, padding: "1.5rem", marginBottom: "1.5rem" }}>
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#111", border: `2px solid ${decision.color}`, borderRadius: 8, padding: "1.5rem", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
             <div>
               <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Scorecard Result</div>
-              <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", marginTop: "0.25rem" }}>
+              <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", marginTop: "0.25rem", filter: isBlindMode && candidate ? "blur(4px)" : "none", transition: "filter 0.3s" }}>
                 {candidate || "Candidate"} · {round}
               </div>
             </div>
@@ -444,7 +471,7 @@ function Scorecard() {
             </div>
           </div>
           {interviewer && <div style={{ marginTop: "1rem", color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>Evaluated by: {interviewer} · {new Date().toLocaleDateString()}</div>}
-        </div>
+        </motion.div>
       )}
 
       <button onClick={handlePrint} style={{
@@ -453,9 +480,10 @@ function Scorecard() {
         fontSize: "0.75rem", letterSpacing: "0.08em", textTransform: "uppercase",
         cursor: "pointer"
       }}>⬡ Print / Export Scorecard</button>
-    </div>
+    </motion.div>
   );
 }
+
 
 // ── D&I ──
 function DIMetrics() {
