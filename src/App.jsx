@@ -257,7 +257,7 @@ function Calculator() {
               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
                 <PolarGrid stroke="#333" />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#888', fontSize: 10, fontFamily: "'DM Mono', monospace" }} />
-                <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
+                <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fill: 'transparent' }} axisLine={false} tickLine={false} />
                 <Radar name="Ideal Target" dataKey="Ideal" stroke="#555" fill="#555" fillOpacity={0.1} />
                 <Radar name="Candidate Eval" dataKey="Candidate" stroke="#C8A97E" fill="#C8A97E" fillOpacity={0.6} />
                 <Tooltip contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px', color: '#FFF', fontSize: '0.8rem' }} />
@@ -277,15 +277,13 @@ function Calculator() {
             {/* Munculin Report Disini */}
             {getReport()}
 
+            {/* Tombol Reset Pindah Ke Dalam Sini */}
+            <button onClick={() => { setCandidateName(""); setExpectedSalary(8000000); setScores({}); setSoftScores({}); }} 
+              style={{ width: "100%", marginTop: "1.5rem", background: "transparent", border: "1px solid #2A2A2A", color: "#888", padding: "0.75rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>
+              ↺ Reset Form for Next Candidate
+            </button>
+
           </motion.div>
-
-          {/* Tombol Reset */}
-          <button onClick={() => { setCandidateName(""); setExpectedSalary(8000000); setScores({}); setSoftScores({}); }} style={{ background: "transparent", border: "1px solid #2A2A2A", color: "#888", padding: "0.75rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>
-            ↺ Reset Form for Next Candidate
-          </button>
-
-        </div>
-      </div>
 
 // ── FUNNEL ──
 function FunnelChart() {
