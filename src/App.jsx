@@ -446,104 +446,165 @@ function FunnelChart() {
 
 // ── SALARY ──
 function SalaryBench() {
-  const [offeredSalary, setOfferedSalary] = useState(70000); // Default ke Market Average USD
+  const [currency, setCurrency] = useState("idr");
+  const [exp, setExp] = useState("mid");
 
-  // Logika Kalkulasi Berdasarkan Gaji
-  const getMetrics = (salary) => {
-    if (salary < 65000) return { acc: 35, days: 65, risk: "HIGH", color: "#E8835A", label: "Below Market" };
-    if (salary < 75000) return { acc: 65, days: 40, risk: "MODERATE", color: "#E8C35A", label: "Market Average" };
-    if (salary < 85000) return { acc: 85, days: 20, risk: "LOW", color: "#74C476", label: "Premium / Pulse" };
+  const data = SALARY_DATA[currency][exp];
+  const pulse = SALARY_DATA.pulse[currency];
+  const unit = currency === "idr" ? "Jt IDR/bulan" : "K USD/tahun";
+
+  const pctAbove = currency === "idr"
+    ? Math.round(((pulse[0] - data[1]) / data[1]) * 100)
+    : Math.round(((pulse[0] * 1000 - data[1] * 1000) / (data[1] * 1000)) * 100);
+
+  // State untuk Simulator (Sinkron dengan data yang dipilih)
+  const [offeredSalary, setOfferedSalary] = useState(data[1]);
+
+  // Update slider otomatis kalau tombol IDR/USD atau exp diganti
+  useEffect(() => {
+    setOfferedSalary(data[1]);
+  }, [currency, exp, data]);
+
+  // Logika dinamis ngikutin persentil IDR/USD
+  const getMetrics = (val) => {
+    const med = data[1];
+    const p75 = data[2];
+    if (val < med * 0.9) return { acc: 35, days: 65, risk: "HIGH", color: "#E8835A", label: "Below Market" };
+    if (val < p75 * 0.95) return { acc: 65, days: 40, risk: "MODERATE", color: "#E8C35A", label: "Market Average" };
+    if (val <= p75 * 1.25) return { acc: 85, days: 20, risk: "LOW", color: "#74C476", label: "Premium / Pulse" };
     return { acc: 95, days: 10, risk: "VERY LOW", color: "#C8A97E", label: "Top 1% Tier" };
   };
 
   const metrics = getMetrics(offeredSalary);
-
-  const formatUSD = (val) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(val);
+  const formatVal = (val) => currency === "idr" ? `Rp ${val} Jt/mo` : `$${val}k/yr`;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
-        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 03 — Compensation Strategy</p>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Salary & Retention Simulator</h2>
-        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 700 }}>
-          Test how your salary offer impacts hiring speed, candidate acceptance, and long-term turnover. The Pulse Digital framework proves that premium compensation is an investment that eliminates hidden recruitment costs.
-        </p>
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 03 — Compensation Intelligence</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 2rem" }}>Salary Strategy & Retention</h2>
       </div>
 
-      {/* Main Control: Slider Gaji */}
-      <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem", marginBottom: "2rem", textAlign: "center" }}>
-        <h3 style={{ color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1rem" }}>Set Proposed Annual Salary (USD)</h3>
-        
-        <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, marginBottom: "0.5rem", transition: "color 0.3s" }}>
-          {formatUSD(offeredSalary)}
-        </div>
-        
-        <div style={{ background: `${metrics.color}15`, display: "inline-block", padding: "0.4rem 1rem", borderRadius: 20, color: metrics.color, fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, marginBottom: "2rem" }}>
-          {metrics.label} Strategy
-        </div>
-        
-        <input 
-          type="range" min="50000" max="100000" step="1000" 
-          value={offeredSalary} 
-          onChange={e => setOfferedSalary(parseInt(e.target.value))}
-          style={{ width: "100%", maxWidth: "600px", accentColor: metrics.color, cursor: "pointer" }}
-        />
-        <div style={{ display: "flex", justifyContent: "space-between", maxWidth: "600px", margin: "0.5rem auto 0", color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>
-          <span>$50k (Entry)</span>
-          <span>$70k (Market Avg)</span>
-          <span>$100k (Top 1%)</span>
+      {/* --- 1. BAGIAN LAMA: BENCHMARKING (TETAP ADA) --- */}
+      <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+        {["idr", "usd"].map(c => (
+          <button key={c} onClick={() => setCurrency(c)} style={{
+            background: currency === c ? "#C8A97E" : "#111", border: `1px solid ${currency === c ? "#C8A97E" : "#2A2A2A"}`,
+            color: currency === c ? "#0D0D0D" : "#888", padding: "0.6rem 1.25rem",
+            fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700,
+            letterSpacing: "0.1em", textTransform: "uppercase", borderRadius: 4, cursor: "pointer"
+          }}>{c === "idr" ? "🇮🇩 IDR" : "🇺🇸 USD"}</button>
+        ))}
+        {["entry", "mid", "senior"].map(e => (
+          <button key={e} onClick={() => setExp(e)} style={{
+            background: exp === e ? "#1A1A1A" : "transparent", border: `1px solid ${exp === e ? "#C8A97E" : "#2A2A2A"}`,
+            color: exp === e ? "#C8A97E" : "#666", padding: "0.6rem 1.25rem",
+            fontFamily: "'DM Mono', monospace", fontSize: "0.75rem",
+            letterSpacing: "0.08em", textTransform: "capitalize", borderRadius: 4, cursor: "pointer"
+          }}>{e === "entry" ? "0-2yr" : e === "mid" ? "3-5yr" : "5+yr"}</button>
+        ))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+        {[
+          { label: "25th Percentile", val: data[0], sub: "Market floor", c: "#444" },
+          { label: "Median (50th)", val: data[1], sub: "Market center", c: "#888" },
+          { label: "75th Percentile", val: data[2], sub: "Market ceiling", c: "#AAA" },
+        ].map(d => (
+          <div key={d.label} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1.25rem", textAlign: "center" }}>
+            <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>{d.label}</div>
+            <div style={{ color: d.c, fontFamily: "'Playfair Display', serif", fontSize: "1.6rem", fontWeight: 700, marginTop: "0.5rem" }}>{d.val}</div>
+            <div style={{ color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", marginTop: "0.25rem" }}>{unit}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: "#111", border: "2px solid #C8A97E", borderRadius: 8, padding: "1.5rem", marginBottom: "3rem" }}>
+        <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem" }}>✦ Pulse Digital Positioning — Premium Employer Strategy</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+          <div>
+            <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>
+              {pulse[0]} – {pulse[1]}
+            </div>
+            <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>{unit}</div>
+          </div>
+          <div style={{ background: "#1A2A1A", border: "1px solid #2A4A2A", borderRadius: 4, padding: "0.75rem 1.25rem", textAlign: "center" }}>
+            <div style={{ color: "#74C476", fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: "1.25rem" }}>+{pctAbove}%</div>
+            <div style={{ color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>above market median</div>
+          </div>
         </div>
       </div>
 
-      {/* 3 Impact Cards (Berubah Otomatis) */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
-        <div style={{ background: "#141414", border: `1px solid ${metrics.color}40`, borderRadius: 8, padding: "1.5rem", textAlign: "center", transition: "all 0.3s" }}>
-          <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "1rem" }}>Offer Acceptance Rate</div>
-          <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{metrics.acc}%</div>
-          <div style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.5rem" }}>Likelihood candidate signs</div>
-        </div>
+      {/* --- 2. BAGIAN BARU: INTERACTIVE SIMULATOR YANG SINKRON --- */}
+      <div style={{ borderTop: "1px dashed #333", paddingTop: "3rem", marginBottom: "2rem", textAlign: "center" }}>
+        <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", textTransform: "uppercase", marginBottom: "1.5rem", letterSpacing: "0.1em" }}>Interactive Retention Simulator</h3>
         
-        <div style={{ background: "#141414", border: `1px solid ${metrics.color}40`, borderRadius: 8, padding: "1.5rem", textAlign: "center", transition: "all 0.3s" }}>
-          <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "1rem" }}>Time to Fill Role</div>
-          <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{metrics.days} <span style={{fontSize: "1rem"}}>days</span></div>
-          <div style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.5rem" }}>Average days vacant</div>
+        <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem", marginBottom: "2rem" }}>
+          <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "clamp(2.5rem, 5vw, 4rem)", fontWeight: 700, marginBottom: "0.5rem", transition: "color 0.3s" }}>
+            {formatVal(offeredSalary)}
+          </div>
+          
+          <div style={{ background: `${metrics.color}15`, display: "inline-block", padding: "0.4rem 1rem", borderRadius: 20, color: metrics.color, fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, marginBottom: "2rem" }}>
+            {metrics.label} Strategy
+          </div>
+          
+          <input 
+            type="range" min={data[0] * 0.7} max={data[2] * 1.5} step={currency === "idr" ? 0.5 : 2} 
+            value={offeredSalary} 
+            onChange={e => setOfferedSalary(parseFloat(e.target.value))}
+            style={{ width: "100%", maxWidth: "600px", accentColor: metrics.color, cursor: "pointer" }}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", maxWidth: "600px", margin: "0.5rem auto 0", color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>
+            <span>Low ({formatVal(Math.round(data[0] * 0.7))})</span>
+            <span>Median ({formatVal(data[1])})</span>
+            <span>High ({formatVal(Math.round(data[2] * 1.5))})</span>
+          </div>
         </div>
 
-        <div style={{ background: "#141414", border: `1px solid ${metrics.color}40`, borderRadius: 8, padding: "1.5rem", textAlign: "center", transition: "all 0.3s" }}>
-          <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "1rem" }}>1-Year Turnover Risk</div>
-          <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{metrics.risk}</div>
-          <div style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.5rem" }}>Probability of early resignation</div>
+        {/* 3 Impact Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+          <div style={{ background: "#141414", border: `1px solid ${metrics.color}40`, borderRadius: 8, padding: "1.5rem", textAlign: "center", transition: "all 0.3s" }}>
+            <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "1rem" }}>Offer Acceptance Rate</div>
+            <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{metrics.acc}%</div>
+            <div style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.5rem" }}>Likelihood candidate signs</div>
+          </div>
+          
+          <div style={{ background: "#141414", border: `1px solid ${metrics.color}40`, borderRadius: 8, padding: "1.5rem", textAlign: "center", transition: "all 0.3s" }}>
+            <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "1rem" }}>Time to Fill Role</div>
+            <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{metrics.days} <span style={{fontSize: "1rem"}}>days</span></div>
+            <div style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.5rem" }}>Average days vacant</div>
+          </div>
+
+          <div style={{ background: "#141414", border: `1px solid ${metrics.color}40`, borderRadius: 8, padding: "1.5rem", textAlign: "center", transition: "all 0.3s" }}>
+            <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "1rem" }}>1-Year Turnover Risk</div>
+            <div style={{ color: metrics.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{metrics.risk}</div>
+            <div style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.5rem" }}>Probability of early resignation</div>
+          </div>
+        </div>
+
+        {/* AI Report */}
+        <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem", textAlign: "left" }}>
+          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+            [ STRATEGIC IMPACT REPORT ]
+          </div>
+          
+          <div style={{ color: "#AAA", fontSize: "0.9rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
+            {offeredSalary < data[1] * 0.9 && (
+               <span>⚠️ <strong>Warning:</strong> The offered salary is significantly below the market median. While it seems like saving money initially, it leads to a very slow <strong>{metrics.days}-day hiring cycle</strong> and a <strong>{metrics.risk} risk</strong> of turnover. You will likely spend more money continuously replacing and retraining staff.</span>
+            )}
+            {offeredSalary >= data[1] * 0.9 && offeredSalary < data[2] * 0.95 && (
+               <span>⚖️ <strong>Analysis:</strong> This offer is standard. You have a fair <strong>{metrics.acc}% chance</strong> of securing the candidate. However, your top-tier talent might still be poached by aggressive competitors. Turnover risk remains <strong>{metrics.risk}</strong>.</span>
+            )}
+            {offeredSalary >= data[2] * 0.95 && (
+               <span>✅ <strong>Pulse Digital Premium Strategy:</strong> By offering a top-percentile salary, you transform compensation into a powerful retention tool. Hiring time drops to just <strong>{metrics.days} days</strong>, and the <strong>{metrics.risk} turnover risk</strong> saves the company massive hidden costs. <strong>This is an investment, not a cost.</strong></span>
+            )}
+          </div>
+
+          <button onClick={() => window.print()} style={{ width: "100%", background: "#C8A97E", border: "none", color: "#0D0D0D", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: "bold", textTransform: "uppercase" }}>
+            📄 Download / Print Salary Strategy Report
+          </button>
         </div>
       </div>
-
-      {/* Automated AI Report for Laymen (Penjelasan untuk Orang Awam) */}
-      <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem" }}>
-        <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
-          [ STRATEGIC IMPACT REPORT ]
-        </div>
-        
-        <div style={{ color: "#AAA", fontSize: "0.9rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
-          {offeredSalary < 65000 && (
-             <span>⚠️ <strong>Warning:</strong> The offered salary is significantly below the market average. While it seems like saving money initially, it leads to a very slow <strong>{metrics.days}-day hiring cycle</strong> and a <strong>{metrics.risk} risk</strong> of turnover. You will likely spend more money continuously replacing and retraining staff.</span>
-          )}
-          {offeredSalary >= 65000 && offeredSalary < 75000 && (
-             <span>⚖️ <strong>Analysis:</strong> This offer is standard. You have a fair <strong>{metrics.acc}% chance</strong> of securing the candidate. However, your top-tier talent might still be poached by aggressive competitors. Turnover risk remains <strong>{metrics.risk}</strong>.</span>
-          )}
-          {offeredSalary >= 75000 && (
-             <span>✅ <strong>Pulse Digital Premium Strategy:</strong> By offering a top-percentile salary, you transform compensation into a powerful retention tool. Hiring time drops to just <strong>{metrics.days} days</strong>, and the <strong>{metrics.risk} turnover risk</strong> saves the company massive hidden costs (lost productivity, empty desks, and retraining). <strong>This is an investment, not a cost.</strong></span>
-          )}
-          <br /><br />
-          <span style={{ color: "#888", fontSize: "0.8rem" }}>
-            💡 <strong>How to read this:</strong> Paying an extra $5k-$10k upfront is mathematically cheaper than the $20,000+ hidden cost of replacing a departing employee due to low pay.
-          </span>
-        </div>
-
-        {/* Tombol Print Report */}
-        <button onClick={() => window.print()} style={{ width: "100%", background: "#C8A97E", border: "none", color: "#0D0D0D", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: "bold", textTransform: "uppercase", marginTop: "1rem" }}>
-          📄 Download / Print Salary Strategy Report
-        </button>
-      </div>
-
     </motion.div>
   );
 }
