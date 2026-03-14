@@ -296,6 +296,7 @@ function FunnelChart() {
   const [screening, setScreening] = useState(10);
   const [interview, setInterview] = useState(15);
   const [offer, setOffer] = useState(5);
+  const [hiresPerYear, setHiresPerYear] = useState(10);
 
   // Algoritma Optimasi Pulse Digital
   const optSourcing = Math.max(Math.round(sourcing * 0.45), 3);
@@ -402,6 +403,37 @@ function FunnelChart() {
         </div>
 
       </div>
+      
+      <div style={{ background: "#111", border: "1px solid #C8A97E", borderRadius: 8, padding: "1.5rem", marginTop: "2rem", textAlign: "center" }}>
+        <h3 style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", textTransform: "uppercase", marginBottom: "1rem" }}>Financial Impact Simulator</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center" }}>
+          
+          <div style={{ width: "100%", maxWidth: "400px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+              <span style={{ color: "#DDD", fontSize: "0.8rem" }}>How many hires per year?</span>
+              <span style={{ color: "#C8A97E", fontWeight: "bold" }}>{hiresPerYear} Hires</span>
+            </div>
+            <input type="range" min="1" max="50" step="1" value={hiresPerYear} onChange={e => setHiresPerYear(parseInt(e.target.value))} style={{ width: "100%", accentColor: "#C8A97E", cursor: "pointer" }} />
+          </div>
+          
+          <div style={{ marginTop: "1rem" }}>
+            <div style={{ color: "#555", fontSize: "0.75rem", marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Projected Annual Savings</div>
+            <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>
+              ${(hiresPerYear * 800).toLocaleString()} 
+              <span style={{ fontSize: "1.2rem", color: "#888", display: "block", marginTop: "0.2rem", fontFamily: "'DM Mono', monospace" }}>(~Rp {(hiresPerYear * 12000000).toLocaleString("id-ID")})</span>
+            </div>
+          </div>
+
+          <p style={{ color: "#888", fontSize: "0.8rem", maxWidth: "600px", lineHeight: 1.6, marginTop: "1rem" }}>
+            💡 <strong>How is this calculated?</strong> By cutting the process to 30 days and filtering bad candidates early (saving interviewers' time), the Pulse Digital method reduces average cost-per-hire from $3,200 to $2,400.
+          </p>
+
+          <button onClick={() => window.print()} style={{ marginTop: "1.5rem", background: "#C8A97E", border: "none", color: "#0D0D0D", padding: "0.8rem 2rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
+            📄 Download / Print ROI Proposal
+          </button>
+        </div>
+      </div>
+
     </motion.div>
   );
 }
