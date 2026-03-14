@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
 
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -111,107 +111,92 @@ function NavBar({ active, setActive }) {
 // ── CALCULATOR ──
 function Calculator() {
   const [scores, setScores] = useState({});
-  const [candidateName, setCandidateName] = useState("");
-  const [animated, setAnimated] = useState(false);
-
-  useEffect(() => { setAnimated(true); }, []);
-
   const decision = getDecision(scores);
   const allFilled = COMPETENCIES.every(c => scores[c.id] !== undefined);
 
+  // Data untuk Radar Chart
+  const radarData = COMPETENCIES.map(c => ({
+    subject: c.short,
+    Ideal: c.critical ? 4 : 3, // Target ideal beda-beda tergantung critical atau nggak
+    Candidate: scores[c.id] || 0,
+    fullMark: 5,
+  }));
+
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ marginBottom: "2.5rem" }}>
-        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 01 — Competency Scoring</p>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: 0 }}>Candidate Fit Calculator</h2>
-        <p style={{ color: "#666", marginTop: "0.75rem", fontSize: "0.85rem" }}>Non-compensatory scoring model · Data Analytics & Paid Ads are critical hurdles</p>
-      </div>
-
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
-        <label style={{ display: "block", color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.68rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Candidate Name</label>
-        <input value={candidateName} onChange={e => setCandidateName(e.target.value)}
-          placeholder="e.g. Alfin Yudistira"
-          style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.75rem 1rem", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", width: "100%", maxWidth: 360, boxSizing: "border-box" }} />
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 01 — Core Evaluation</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Candidate Fit Calculator</h2>
       </div>
 
-      <div style={{ display: "grid", gap: "1rem" }}>
-        {COMPETENCIES.map((c, i) => (
-          <div key={c.id} style={{
-            background: "#111", border: `1px solid ${scores[c.id] >= 3 ? "#1E1E1E" : c.critical && scores[c.id] < 3 && scores[c.id] !== undefined ? "#4A1A0A" : "#1E1E1E"}`,
-            borderLeft: `3px solid ${c.critical ? c.color : "#2A2A2A"}`,
-            borderRadius: 6, padding: "1.25rem 1.5rem",
-            transform: animated ? "translateX(0)" : "translateX(-20px)",
-            opacity: animated ? 1 : 0,
-            transition: `all 0.4s ease ${i * 0.05}s`
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.75rem" }}>
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <span style={{ fontSize: "1.1rem" }}>{c.icon}</span>
-                  <span style={{ color: "#F0EAE0", fontWeight: 600, fontSize: "0.9rem" }}>{c.label}</span>
-                  {c.critical && <span style={{ background: "#2A1A0A", color: c.color, fontSize: "0.6rem", fontFamily: "'DM Mono', monospace", padding: "0.15rem 0.4rem", borderRadius: 2, letterSpacing: "0.08em" }}>CRITICAL HURDLE</span>}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
+        {/* Bagian Kiri: Slider Penilaian */}
+        <div style={{ flex: "1 1 400px" }}>
+          <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+            <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Adjust Competency Scores</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+              {COMPETENCIES.map(c => (
+                <div key={c.id}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                    <span style={{ color: "#DDD", fontSize: "0.85rem", fontWeight: 500 }}>{c.icon} {c.label}</span>
+                    <span style={{ color: c.color, fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>{scores[c.id] || 0} / 5</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="5" step="1" 
+                    value={scores[c.id] || 0} 
+                    onChange={e => setScores({ ...scores, [c.id]: parseInt(e.target.value) })}
+                    style={{ width: "100%", accentColor: c.color, cursor: "pointer" }}
+                  />
                 </div>
-                <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", marginTop: "0.25rem", letterSpacing: "0.06em" }}>
-                  Weight: {(c.weight * 100).toFixed(0)}%
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
-                {[1, 2, 3, 4, 5].map(n => (
-                  <button key={n} onClick={() => setScores(s => ({ ...s, [c.id]: n }))}
-                    style={{
-                      width: 38, height: 38, borderRadius: 4,
-                      background: scores[c.id] >= n ? c.color : "#1A1A1A",
-                      border: `1px solid ${scores[c.id] >= n ? c.color : "#333"}`,
-                      color: scores[c.id] >= n ? "#0D0D0D" : "#555",
-                      fontFamily: "'DM Mono', monospace", fontWeight: 700,
-                      fontSize: "0.85rem", cursor: "pointer",
-                      transition: "all 0.15s"
-                    }}>{n}</button>
-                ))}
-                {scores[c.id] && (
-                  <span style={{ color: c.color, fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, minWidth: 32, textAlign: "center" }}>
-                    {(scores[c.id] * c.weight).toFixed(2)}
-                  </span>
-                )}
-              </div>
+              ))}
             </div>
-            {c.critical && scores[c.id] < 3 && scores[c.id] !== undefined && (
-              <div style={{ marginTop: "0.75rem", background: "#2A0D00", border: "1px solid #4A1A0A", borderRadius: 4, padding: "0.5rem 0.75rem", color: "#E8835A", fontSize: "0.75rem", fontFamily: "'DM Mono', monospace" }}>
-                ⚠ Critical hurdle not met — candidate disqualified regardless of other scores
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {allFilled && (
-        <div style={{
-          marginTop: "2rem", background: "#111", border: `2px solid ${decision.color}`,
-          borderRadius: 8, padding: "2rem", textAlign: "center",
-          animation: "fadeIn 0.5s ease"
-        }}>
-          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Final Decision</div>
-          {candidateName && <div style={{ color: "#888", fontSize: "0.9rem", marginBottom: "0.75rem" }}>{candidateName}</div>}
-          <div style={{ fontSize: "clamp(2rem, 8vw, 4rem)", fontFamily: "'Playfair Display', serif", color: decision.color, fontWeight: 700, lineHeight: 1 }}>
-            {decision.score.toFixed(2)}
-          </div>
-          <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", marginTop: "0.25rem" }}>/ 5.00 weighted score</div>
-          <div style={{ marginTop: "1.25rem", display: "inline-block", background: `${decision.color}22`, border: `1px solid ${decision.color}`, borderRadius: 4, padding: "0.6rem 1.5rem", color: decision.color, fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.05em" }}>
-            {decision.label}
-          </div>
-          <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "center", gap: "2rem", flexWrap: "wrap" }}>
-            {COMPETENCIES.map(c => (
-              <div key={c.id} style={{ textAlign: "center" }}>
-                <div style={{ color: c.color, fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700 }}>{scores[c.id]}/5</div>
-                <div style={{ color: "#444", fontSize: "0.6rem", fontFamily: "'DM Mono', monospace" }}>{c.short}</div>
-              </div>
-            ))}
+            <div style={{ marginTop: "1.5rem", display: "flex", gap: "1rem" }}>
+              <button onClick={() => {
+                const maxScores = {};
+                COMPETENCIES.forEach(c => maxScores[c.id] = 5);
+                setScores(maxScores);
+              }} style={{ flex: 1, background: "#1A1A1A", border: "1px solid #2A2A2A", color: "#888", padding: "0.75rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>Max All</button>
+              <button onClick={() => setScores({})} style={{ flex: 1, background: "#1A1A1A", border: "1px solid #2A2A2A", color: "#888", padding: "0.75rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>Reset</button>
+            </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Bagian Kanan: Radar Chart & Hasil */}
+        <div style={{ flex: "1 1 400px", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", height: 350, display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                <PolarGrid stroke="#333" />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#888', fontSize: 10, fontFamily: "'DM Mono', monospace" }} />
+                <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fill: '#555' }} />
+                <Radar name="Ideal Score" dataKey="Ideal" stroke="#555" fill="#555" fillOpacity={0.2} />
+                <Radar name="Candidate" dataKey="Candidate" stroke="#C8A97E" fill="#C8A97E" fillOpacity={0.5} />
+                <Legend wrapperStyle={{ fontFamily: "'DM Mono', monospace", fontSize: '0.75rem' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px', color: '#FFF' }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <motion.div animate={{ borderColor: decision.color }} style={{ background: "#111", border: "2px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", textAlign: "center" }}>
+            <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Final Decision</div>
+            <div style={{ color: decision.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700, margin: "0.5rem 0" }}>
+              {allFilled ? decision.score.toFixed(2) : "—"}
+            </div>
+            <div style={{ color: decision.color, fontFamily: "'DM Mono', monospace", fontSize: "1rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+              {allFilled ? decision.label : "Awaiting Input"}
+            </div>
+            {allFilled && (
+              <p style={{ color: "#888", fontSize: "0.85rem", lineHeight: 1.5, margin: 0 }}>
+                {decision.score >= 4 ? "Candidate exceeds expectations. Proceed to offer." : decision.score >= 3 ? "Candidate meets minimum requirements. Compare with pool." : "Candidate does not meet critical hurdles. Reject."}
+              </p>
+            )}
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
+
 
 // ── FUNNEL ──
 function FunnelChart() {
