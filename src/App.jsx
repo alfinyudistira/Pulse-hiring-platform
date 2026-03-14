@@ -444,9 +444,8 @@ function FunnelChart() {
   );
 }
 
-
 // ── SALARY ──
-function Salary() {
+function SalaryBench() {
   const [offeredSalary, setOfferedSalary] = useState(70000); // Default ke Market Average USD
 
   // Logika Kalkulasi Berdasarkan Gaji
