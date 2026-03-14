@@ -140,19 +140,19 @@ function Calculator() {
   let finalDecisionColor = decision.color;
   let salaryNote = "";
 
-  if (allFilled) {
-    if (expectedSalary > maxBudget && decision.score >= 3.5) {
-      finalDecisionLabel = "STRONG HIRE (NEGOTIATE)";
-      finalDecisionColor = "#F4A460"; // Oranye Peringatan
-      salaryNote = "⚠️ Exceeds budget. Strong candidate, negotiation required.";
-    } else if (expectedSalary > maxBudget && decision.score < 3.5) {
-      finalDecisionLabel = "NO HIRE (OVER BUDGET)";
-      finalDecisionColor = "#E8835A"; // Merah
-      salaryNote = "⚠️ Salary expectation does not match skill level.";
-    } else if (decision.score >= 4) {
-      salaryNote = "✅ Within budget. Excellent ROI.";
+    if (allFilled) {
+    if (decision.score >= 4.0) {
+      finalDecisionLabel = expectedSalary > maxBudget ? "STRONG HIRE (NEGOTIATE)" : "STRONG HIRE";
+      finalDecisionColor = expectedSalary > maxBudget ? "#F4A460" : "#74C476";
+      salaryNote = expectedSalary > maxBudget ? "⚠️ Exceeds budget. Strong candidate, negotiation required." : "✅ Within budget. Excellent ROI.";
+    } else if (decision.score >= 3.0) {
+      finalDecisionLabel = expectedSalary > maxBudget ? "TEAM DISCUSSION (OVER BUDGET)" : "MAYBE (TEAM DISCUSSION)";
+      finalDecisionColor = "#E8C35A"; // Warna Kuning/Gold
+      salaryNote = expectedSalary > maxBudget ? "⚠️ Over budget for a borderline candidate." : "✅ Within budget. Review potential.";
     } else {
-      salaryNote = "✅ Within budget limit.";
+      finalDecisionLabel = "NO HIRE";
+      finalDecisionColor = "#E8835A";
+      salaryNote = "❌ Does not meet minimum requirements.";
     }
   }
 
