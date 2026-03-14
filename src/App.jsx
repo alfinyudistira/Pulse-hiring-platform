@@ -277,6 +277,12 @@ function Calculator() {
             {/* Munculin Report Disini */}
             {getReport()}
 
+            {/* Tombol Print / Download PDF */}
+            <button onClick={() => window.print()} 
+              style={{ width: "100%", marginTop: "1.5rem", background: "#C8A97E", border: "none", color: "#0D0D0D", padding: "0.8rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
+              📄 Download / Print Candidate Report
+            </button>
+
             {/* Tombol Reset Pindah Ke Dalam Sini */}
             <button onClick={() => { setCandidateName(""); setExpectedSalary(8000000); setScores({}); setSoftScores({}); }} 
               style={{ width: "100%", marginTop: "1.5rem", background: "transparent", border: "1px solid #2A2A2A", color: "#888", padding: "0.75rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>
