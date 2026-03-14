@@ -615,16 +615,17 @@ function Onboarding() {
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 function Hero({ onStart }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => { setTimeout(() => setVisible(true), 100); }, []);
-
   return (
     <div style={{
       minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center",
       alignItems: "center", textAlign: "center", padding: "2rem",
       background: "radial-gradient(ellipse at 50% 0%, #1A1208 0%, #0D0D0D 60%)"
     }}>
-      <div style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(30px)", transition: "all 1s ease" }}>
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 30 }} 
+        animate={{ opacity: 1, scale: 1, y: 0 }} 
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
         <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: "1.5rem" }}>
           ✦ Pulse Digital · HR Technical Analysis ✦
         </div>
@@ -642,24 +643,27 @@ function Hero({ onStart }) {
         </p>
         <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap", marginBottom: "3rem" }}>
           {["8 Competencies", "T-Shaped Scoring", "D&I Dashboard", "90-Day Blueprint"].map(tag => (
-            <span key={tag} style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 20, padding: "0.4rem 0.9rem", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.68rem", letterSpacing: "0.06em" }}>{tag}</span>
+            <motion.span whileHover={{ scale: 1.1, backgroundColor: "#C8A97E", color: "#000" }} key={tag} style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 20, padding: "0.4rem 0.9rem", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.68rem", letterSpacing: "0.06em", cursor: "default", transition: "all 0.2s" }}>{tag}</motion.span>
           ))}
         </div>
-        <button onClick={onStart} style={{
+        <motion.button 
+          whileHover={{ scale: 1.05, boxShadow: "0 0 50px #C8A97E66" }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onStart} style={{
           background: "#C8A97E", border: "none", borderRadius: 4,
           color: "#0D0D0D", padding: "1rem 2.5rem",
           fontFamily: "'DM Mono', monospace", fontSize: "0.85rem",
           fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
-          cursor: "pointer", transition: "all 0.2s",
-          boxShadow: "0 0 40px #C8A97E33"
-        }}>Enter Platform →</button>
+          cursor: "pointer", boxShadow: "0 0 30px #C8A97E33"
+        }}>Enter Platform →</motion.button>
         <div style={{ marginTop: "1rem", color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>
           by Alfin Yudistira · Pulse Digital · 2025
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
+
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
