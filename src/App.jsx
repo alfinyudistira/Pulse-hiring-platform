@@ -292,53 +292,115 @@ function Calculator() {
 
 // ── FUNNEL ──
 function FunnelChart() {
+  const [sourcing, setSourcing] = useState(15);
+  const [screening, setScreening] = useState(10);
+  const [interview, setInterview] = useState(15);
+  const [offer, setOffer] = useState(5);
+
+  // Algoritma Optimasi Pulse Digital
+  const optSourcing = Math.max(Math.round(sourcing * 0.45), 3);
+  const optScreening = Math.max(Math.round(screening * 0.5), 2);
+  const optInterview = Math.max(Math.round(interview * 0.9), 5); // Interview dijaga ketat biar kualitas gak turun
+  const optOffer = Math.max(Math.round(offer * 0.6), 2);
+
+  const currentTotal = sourcing + screening + interview + offer;
+  const optTotal = optSourcing + optScreening + optInterview + optOffer;
+  const efficiency = Math.round(((currentTotal - optTotal) / currentTotal) * 100);
+
   const data = [
-    { name: 'Sourcing', Traditional: 15, Optimized: 7 },
-    { name: 'Screening', Traditional: 10, Optimized: 5 },
-    { name: 'Interview', Traditional: 15, Optimized: 15 },
-    { name: 'Offer', Traditional: 5, Optimized: 3 },
+    { name: 'Sourcing', Current: sourcing, Optimized: optSourcing },
+    { name: 'Screening', Current: screening, Optimized: optScreening },
+    { name: 'Interview', Current: interview, Optimized: optInterview },
+    { name: 'Offer', Current: offer, Optimized: optOffer },
   ];
 
+  const getAdvice = () => {
+    let advice = [];
+    if (sourcing > 10) advice.push(<li key="1"><strong style={{color:"#C8A97E"}}>Sourcing ({sourcing} days):</strong> Expand channels (e.g., global reach like MENA/APAC) and use automated parsing to cut this down to {optSourcing} days.</li>);
+    if (screening > 7) advice.push(<li key="2"><strong style={{color:"#C8A97E"}}>Screening ({screening} days):</strong> Implement <strong>Blind Screening</strong> and non-compensatory scoring rules. Filter out candidates failing critical hurdles instantly to reach {optScreening} days.</li>);
+    if (interview > 10) advice.push(<li key="3"><strong style={{color:"#C8A97E"}}>Interview ({interview} days):</strong> Standardize the 3-round process. Apply the <strong>No-Huddle Rule</strong>: use strict scoring rubrics to prevent endless deliberation.</li>);
+    if (offer > 3) advice.push(<li key="4"><strong style={{color:"#C8A97E"}}>Offer ({offer} days):</strong> Use transparent compensation models upfront to reduce negotiation ping-pong. Target: {optOffer} days.</li>);
+    
+    if(advice.length === 0) return <div style={{ color: "#74C476", padding: "1rem" }}>Your process is highly optimized! Maintain current standards.</div>;
+    return <ul style={{ paddingLeft: "1.2rem", margin: 0, display: "flex", flexDirection: "column", gap: "0.8rem", color: "#AAA", fontSize: "0.85rem", lineHeight: 1.6 }}>{advice}</ul>;
+  };
+
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 900, margin: "0 auto" }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
         <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 02 — Process Optimization</p>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Hiring Funnel Velocity</h2>
-        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 600 }}>
-          Optimizing the recruitment timeline from 45 days to 30 days. By compressing the sourcing and screening stages, we maintain interview rigor while securing top talent faster.
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Hiring Efficiency Simulator</h2>
+        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 700 }}>
+          Input your company's current recruitment timeline below. The system will simulate how the Pulse Digital framework (Blind Screening, Structured Rubrics, No-Huddle Rules) can compress your time-to-hire.
         </p>
       </div>
 
-      <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem 1rem 1rem 0", height: 350, marginBottom: "2rem" }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-            <XAxis dataKey="name" stroke="#555" tick={{ fill: '#888', fontSize: 12, fontFamily: "'DM Mono', monospace" }} />
-            <YAxis stroke="#555" tick={{ fill: '#888', fontSize: 12, fontFamily: "'DM Mono', monospace" }} />
-            <Tooltip 
-              contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px', fontFamily: "'DM Mono', monospace", fontSize: '0.8rem', color: '#FFF' }}
-              itemStyle={{ color: '#E0E0E0' }} cursor={{ fill: '#222' }}
-            />
-            <Legend wrapperStyle={{ fontFamily: "'DM Mono', monospace", fontSize: '0.8rem', paddingTop: '10px' }} />
-            <Bar dataKey="Traditional" name="Traditional (Days)" fill="#2A2A2A" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Optimized" name="Optimized (Days)" fill="#C8A97E" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", marginBottom: "2rem" }}>
+        {/* Kiri: Slider Input Perusahaan */}
+        <div style={{ flex: "1 1 300px", background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+          <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Your Current Timeline</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+            {[
+              { label: "Sourcing", val: sourcing, set: setSourcing, max: 40 },
+              { label: "Screening", val: screening, set: setScreening, max: 30 },
+              { label: "Interviewing", val: interview, set: setInterview, max: 40 },
+              { label: "Offer & Nego", val: offer, set: setOffer, max: 20 }
+            ].map(stage => (
+              <div key={stage.label}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                  <span style={{ color: "#DDD", fontSize: "0.8rem", fontWeight: 500 }}>{stage.label}</span>
+                  <span style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700 }}>{stage.val} days</span>
+                </div>
+                <input type="range" min="1" max={stage.max} step="1" value={stage.val} onChange={e => stage.set(parseInt(e.target.value))} style={{ width: "100%", accentColor: "#555", cursor: "pointer" }} />
+              </div>
+            ))}
+          </div>
+          
+          <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+             <span style={{ color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase" }}>Current Total</span>
+             <span style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.8rem", fontWeight: 700 }}>{currentTotal} <span style={{fontSize: "1rem", fontFamily: "'DM Mono', monospace", color: "#666"}}>days</span></span>
+          </div>
+        </div>
+
+        {/* Kanan: Grafik Real-time */}
+        <div style={{ flex: "1 1 450px", background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem 1.5rem 1rem 0", height: 350 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+              <XAxis dataKey="name" stroke="#555" tick={{ fill: '#888', fontSize: 11, fontFamily: "'DM Mono', monospace" }} axisLine={false} tickLine={false} />
+              <YAxis stroke="#555" tick={{ fill: '#555', fontSize: 11, fontFamily: "'DM Mono', monospace" }} axisLine={false} tickLine={false} />
+              <Tooltip cursor={{ fill: '#1A1A1A' }} contentStyle={{ backgroundColor: '#0D0D0D', border: '1px solid #333', borderRadius: '8px', color: '#FFF', fontFamily: "'DM Mono', monospace", fontSize: '0.8rem' }} />
+              <Legend wrapperStyle={{ fontFamily: "'DM Mono', monospace", fontSize: '0.75rem', paddingTop: '10px' }} />
+              <Bar dataKey="Current" name="Your Timeline" fill="#2A2A2A" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Optimized" name="Pulse Digital Model" fill="#C8A97E" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
-        <div style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 6, padding: "1.5rem" }}>
-          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Previous Baseline</div>
-          <div style={{ color: "#888", fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>45 <span style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "'DM Mono', monospace" }}>days</span></div>
+      {/* Bawah: AI Report & ROI */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
+        
+        {/* Kolom Report / Rekomendasi */}
+        <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", flex: 2 }}>
+          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+            [ STRATEGIC RECOMMENDATIONS ]
+          </div>
+          {getAdvice()}
         </div>
-        <div style={{ background: "rgba(200, 169, 126, 0.05)", border: "1px solid rgba(200, 169, 126, 0.3)", borderRadius: 6, padding: "1.5rem" }}>
-          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Optimized Target</div>
-          <div style={{ color: "#C8A97E", fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>30 <span style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "'DM Mono', monospace" }}>days</span></div>
+
+        {/* Kolom ROI Summary */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", flex: 1 }}>
+          <div style={{ background: "rgba(200, 169, 126, 0.05)", border: "1px solid rgba(200, 169, 126, 0.3)", borderRadius: 6, padding: "1.5rem", textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>New Optimized Target</div>
+            <div style={{ color: "#C8A97E", fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{optTotal} <span style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "'DM Mono', monospace" }}>days</span></div>
+          </div>
+          <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1.5rem", textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            <div style={{ color: "#74C476", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Efficiency Gain</div>
+            <div style={{ color: "#74C476", fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{efficiency}<span style={{ fontSize: "1.5rem", fontWeight: 400 }}>%</span></div>
+          </div>
         </div>
-        <div style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 6, padding: "1.5rem" }}>
-          <div style={{ color: "#74C476", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Efficiency Gain</div>
-          <div style={{ color: "#74C476", fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>33<span style={{ fontSize: "1.5rem", fontWeight: 400 }}>%</span></div>
-        </div>
+
       </div>
     </motion.div>
   );
