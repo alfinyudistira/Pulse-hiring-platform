@@ -110,98 +110,123 @@ function NavBar({ active, setActive }) {
 
 // ── CALCULATOR ──
 function Calculator() {
-  const [name, setName] = useState("");
+  const [candidateName, setCandidateName] = useState("");
+  const [expectedSalary, setExpectedSalary] = useState(8000000);
   const [scores, setScores] = useState({});
   const [softScores, setSoftScores] = useState({});
-  const [salary, setSalary] = useState("");
-  
-  const decision = getDecision(scores);
-  const allHardFilled = COMPETENCIES.every(c => scores[c.id] !== undefined);
-  
+
+  // Tambahan Data Culture & Soft Skill
   const SOFT_SKILLS = [
-    { id: "comm", label: "Communication & Clarity", icon: "🗣️", color: "#6BAED6" },
-    { id: "culture", label: "Culture & Ethics Fit", icon: "🤝", color: "#F4A460" },
-    { id: "adapt", label: "Adaptability & Growth", icon: "🌱", color: "#7EB5A6" }
+    { id: "comm", label: "Communication", short: "Communication", color: "#B39DDB", icon: "🗣️" },
+    { id: "prob", label: "Problem Solving", short: "Problem Solv", color: "#80CBC4", icon: "🧠" },
+    { id: "culture", label: "Culture Fit", short: "Culture Fit", color: "#FFCC80", icon: "🤝" },
+    { id: "adapt", label: "Adaptability", short: "Adaptability", color: "#F48FB1", icon: "🔄" }
   ];
 
-  const radarData = COMPETENCIES.map(c => ({
-    subject: c.short,
-    Ideal: c.critical ? 4 : 3,
-    Candidate: scores[c.id] || 0,
-    fullMark: 5,
-  }));
+  const decision = getDecision(scores);
+  const allCoreFilled = COMPETENCIES.every(c => scores[c.id] !== undefined);
+  const allSoftFilled = SOFT_SKILLS.every(c => softScores[c.id] !== undefined);
+  const allFilled = allCoreFilled && allSoftFilled;
 
-  // Salary Logic (Misal Budget Max adalah Rp 12.000.000)
-  const numSalary = parseInt(salary) || 0;
-  const budgetMax = 12000000; 
-  let salaryStatus = "Awaiting Input";
-  let salaryColor = "#555";
-  
-  if (numSalary > 0) {
-    if (numSalary <= budgetMax) { salaryStatus = "Within Budget"; salaryColor = "#74C476"; }
-    else if (numSalary <= budgetMax * 1.20) { salaryStatus = "Negotiation Required"; salaryColor = "#F4A460"; }
-    else { salaryStatus = "Over Budget (High Risk)"; salaryColor = "#E8835A"; }
+  // Data Radar Chart Gabungan (Hard Skill + Soft Skill)
+  const radarData = [
+    ...COMPETENCIES.map(c => ({ subject: c.short, Ideal: c.critical ? 4 : 3, Candidate: scores[c.id] || 0, fullMark: 5 })),
+    ...SOFT_SKILLS.map(c => ({ subject: c.short, Ideal: 4, Candidate: softScores[c.id] || 0, fullMark: 5 }))
+  ];
+
+  // Logika Budgeting & Negosiasi
+  const maxBudget = 10000000; // Maksimal budget perusahaan 10 Juta
+  let finalDecisionLabel = decision.label;
+  let finalDecisionColor = decision.color;
+  let salaryNote = "";
+
+  if (allFilled) {
+    if (expectedSalary > maxBudget && decision.score >= 3.5) {
+      finalDecisionLabel = "STRONG HIRE (NEGOTIATE)";
+      finalDecisionColor = "#F4A460"; // Oranye Peringatan
+      salaryNote = "⚠️ Exceeds budget. Strong candidate, negotiation required.";
+    } else if (expectedSalary > maxBudget && decision.score < 3.5) {
+      finalDecisionLabel = "NO HIRE (OVER BUDGET)";
+      finalDecisionColor = "#E8835A"; // Merah
+      salaryNote = "⚠️ Salary expectation does not match skill level.";
+    } else if (decision.score >= 4) {
+      salaryNote = "✅ Within budget. Excellent ROI.";
+    } else {
+      salaryNote = "✅ Within budget limit.";
+    }
   }
 
-  // Generate Report Otomatis
-  const generateReport = () => {
-    if (!name) return "Please enter candidate name to begin evaluation.";
-    if (!allHardFilled) return "Incomplete technical evaluation. Please score all core competencies first.";
-    if (numSalary === 0) return "Salary expectation is required to generate the final assessment.";
+  // Fungsi Pembuat Report Otomatis
+  const getReport = () => {
+    if (!allFilled) return <div style={{ color: "#555", fontSize: "0.8rem", marginTop: "1rem" }}>Fill all competencies to generate AI report...</div>;
     
-    const softAvg = Object.values(softScores).reduce((a, b) => a + b, 0) / (Object.values(softScores).length || 1);
-    
-    let text = `${name} demonstrates a technical score of ${decision.score.toFixed(2)}/5.00 (${decision.label}). `;
-    if (softAvg >= 4) text += `Culture and soft skills are exceptionally strong. `;
-    else if (softAvg >= 3) text += `Culture fit is acceptable. `;
-    else text += `There are significant concerns regarding culture and soft skills. `;
+    const allSkills = [...COMPETENCIES.map(c => ({...c, score: scores[c.id]})), ...SOFT_SKILLS.map(c => ({...c, score: softScores[c.id]}))];
+    const strengths = allSkills.filter(s => s.score >= 4).map(s => s.short);
+    const weaknesses = allSkills.filter(s => s.score <= 2).map(s => s.short);
 
-    if (numSalary <= budgetMax && decision.score >= 3.5 && softAvg >= 3) {
-      text += `With an expected salary of Rp ${numSalary.toLocaleString("id-ID")}, this candidate is a STRONG HIRE. Proceed to offer immediately.`;
-    } else if (numSalary > budgetMax && numSalary <= budgetMax * 1.20 && decision.score >= 3.5) {
-      text += `Expected salary is Rp ${numSalary.toLocaleString("id-ID")}. Recommend proceeding to the NEGOTIATION phase as the technical fit is solid.`;
-    } else if (numSalary > budgetMax * 1.20) {
-      text += `Expected salary (Rp ${numSalary.toLocaleString("id-ID")}) significantly exceeds the maximum budget. Recommend REJECT unless critical business needs justify the premium cost.`;
-    } else {
-      text += `Review profile carefully before proceeding to the next round.`;
-    }
-    return text;
+    return (
+      <div style={{ fontSize: "0.8rem", color: "#AAA", lineHeight: 1.6, textAlign: "left", marginTop: "1.5rem", padding: "1.2rem", background: "#0A0A0A", borderRadius: 8, border: "1px solid #222" }}>
+        <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", marginBottom: "0.8rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+          [ AUTOMATED CANDIDATE ANALYSIS ]
+        </div>
+        <div style={{ marginBottom: "0.5rem" }}>
+          <strong style={{ color: "#DDD" }}>Profile:</strong> {candidateName || "Anonymous Candidate"}
+        </div>
+        <div style={{ marginBottom: "0.5rem" }}>
+          <strong style={{ color: "#74C476" }}>💪 Core Strengths:</strong> {strengths.length > 0 ? strengths.join(", ") : "None identified."}
+        </div>
+        <div style={{ marginBottom: "0.5rem" }}>
+          <strong style={{ color: "#E8835A" }}>⚠️ Areas to Improve:</strong> {weaknesses.length > 0 ? weaknesses.join(", ") : "Solid across all dimensions."}
+        </div>
+        <div>
+          <strong style={{ color: expectedSalary > maxBudget ? "#F4A460" : "#74C476" }}>💰 Comp. Analysis:</strong> {salaryNote}
+        </div>
+      </div>
+    );
   };
+
+  const formatIDR = (value) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1100, margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
         <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 01 — Core Evaluation</p>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Candidate Fit & Offer Calculator</h2>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Candidate Fit & Value Calculator</h2>
       </div>
 
-      {/* Candidate Profile Info */}
-      <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", marginBottom: "1.5rem", display: "flex", flexWrap: "wrap", gap: "1.5rem" }}>
-        <div style={{ flex: "1 1 300px" }}>
-          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Candidate Name</label>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Alfin Yudistira"
-            style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.75rem 1rem", fontFamily: "'DM Mono', monospace", fontSize: "0.9rem", width: "100%", boxSizing: "border-box" }} />
-        </div>
-        <div style={{ flex: "1 1 300px" }}>
-          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Expected Monthly Salary (IDR)</label>
-          <input value={salary} onChange={e => setSalary(e.target.value)} placeholder="e.g. 10000000" type="number"
-            style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.75rem 1rem", fontFamily: "'DM Mono', monospace", fontSize: "0.9rem", width: "100%", boxSizing: "border-box" }} />
-        </div>
+      {/* Bagian Atas: Nama & Salary */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginBottom: "2rem", background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+         <div>
+            <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Candidate Full Name</label>
+            <input value={candidateName} onChange={e => setCandidateName(e.target.value)} placeholder="e.g. John Doe"
+              style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.75rem 1rem", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", width: "100%", boxSizing: "border-box" }} />
+         </div>
+         <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                <label style={{ color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>Expected Monthly Salary (IDR)</label>
+                <span style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: 700 }}>{formatIDR(expectedSalary)}</span>
+            </div>
+            <input 
+              type="range" min="4000000" max="20000000" step="500000" 
+              value={expectedSalary} 
+              onChange={e => setExpectedSalary(Number(e.target.value))}
+              style={{ width: "100%", accentColor: "#C8A97E", cursor: "pointer", marginTop: "0.5rem" }}
+            />
+         </div>
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
-        {/* Bagian Kiri: Sliders */}
+        {/* Bagian Kiri: Sliders Hard Skill & Soft Skill */}
         <div style={{ flex: "1 1 450px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           
-          {/* Hard Skills */}
           <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
-            <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Technical Competencies</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+            <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Technical Competencies (Hard Skills)</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.2rem" }}>
               {COMPETENCIES.map(c => (
                 <div key={c.id}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{ color: "#DDD", fontSize: "0.85rem", fontWeight: 500 }}>{c.icon} {c.label}</span>
-                    <span style={{ color: c.color, fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>{scores[c.id] || 0} / 5</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                    <span style={{ color: "#DDD", fontSize: "0.75rem", fontWeight: 500 }}>{c.icon} {c.short}</span>
+                    <span style={{ color: c.color, fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700 }}>{scores[c.id] || 0}</span>
                   </div>
                   <input type="range" min="0" max="5" step="1" value={scores[c.id] || 0} onChange={e => setScores({ ...scores, [c.id]: parseInt(e.target.value) })} style={{ width: "100%", accentColor: c.color, cursor: "pointer" }} />
                 </div>
@@ -209,63 +234,50 @@ function Calculator() {
             </div>
           </div>
 
-          {/* Soft Skills */}
           <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
-            <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Culture & Soft Skills</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+            <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Culture Fit & Soft Skills</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.2rem" }}>
               {SOFT_SKILLS.map(c => (
                 <div key={c.id}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                    <span style={{ color: "#DDD", fontSize: "0.85rem", fontWeight: 500 }}>{c.icon} {c.label}</span>
-                    <span style={{ color: c.color, fontFamily: "'DM Mono', monospace", fontWeight: 700 }}>{softScores[c.id] || 0} / 5</span>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                    <span style={{ color: "#DDD", fontSize: "0.75rem", fontWeight: 500 }}>{c.icon} {c.short}</span>
+                    <span style={{ color: c.color, fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700 }}>{softScores[c.id] || 0}</span>
                   </div>
                   <input type="range" min="0" max="5" step="1" value={softScores[c.id] || 0} onChange={e => setSoftScores({ ...softScores, [c.id]: parseInt(e.target.value) })} style={{ width: "100%", accentColor: c.color, cursor: "pointer" }} />
                 </div>
               ))}
             </div>
           </div>
-
         </div>
 
         {/* Bagian Kanan: Radar Chart & Report */}
         <div style={{ flex: "1 1 450px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          
           <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", height: 350, display: "flex", justifyContent: "center", alignItems: "center" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
                 <PolarGrid stroke="#333" />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#888', fontSize: 10, fontFamily: "'DM Mono', monospace" }} />
                 <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fill: '#555' }} />
-                <Radar name="Ideal Score" dataKey="Ideal" stroke="#555" fill="#555" fillOpacity={0.2} />
-                <Radar name="Candidate" dataKey="Candidate" stroke="#C8A97E" fill="#C8A97E" fillOpacity={0.5} />
-                <Tooltip contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px', color: '#FFF' }} />
+                <Radar name="Ideal Target" dataKey="Ideal" stroke="#555" fill="#555" fillOpacity={0.1} />
+                <Radar name="Candidate Eval" dataKey="Candidate" stroke="#C8A97E" fill="#C8A97E" fillOpacity={0.6} />
+                <Tooltip contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #333', borderRadius: '8px', color: '#FFF', fontSize: '0.8rem' }} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Report Box */}
-          <motion.div animate={{ borderColor: allHardFilled ? decision.color : "#1E1E1E" }} style={{ background: "#111", border: `2px solid #1E1E1E`, borderRadius: 8, padding: "1.5rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "1rem" }}>
-              <div>
-                <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.25rem" }}>Technical Fit</div>
-                <div style={{ color: decision.color, fontFamily: "'Playfair Display', serif", fontSize: "1.8rem", fontWeight: 700 }}>
-                  {allHardFilled ? decision.score.toFixed(2) : "—"}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.25rem" }}>Salary Assessment</div>
-                <div style={{ color: salaryColor, fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: 700, padding: "0.25rem 0" }}>
-                  {salaryStatus}
-                </div>
-              </div>
+          <motion.div animate={{ borderColor: finalDecisionColor }} style={{ background: "#111", border: "2px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", textAlign: "center" }}>
+            <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Final Recommendation</div>
+            <div style={{ color: finalDecisionColor, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700, margin: "0.5rem 0" }}>
+              {allFilled ? decision.score.toFixed(2) : "—"}
+            </div>
+            <div style={{ background: `${finalDecisionColor}15`, display: "inline-block", padding: "0.5rem 1rem", borderRadius: 4, color: finalDecisionColor, fontFamily: "'DM Mono', monospace", fontSize: "1rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+              {allFilled ? finalDecisionLabel : "Awaiting Evaluation Input"}
             </div>
             
-            <h4 style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", margin: "0 0 0.75rem" }}>✦ Executive Report</h4>
-            <p style={{ color: "#AAA", fontSize: "0.85rem", lineHeight: 1.6, margin: 0 }}>
-              {generateReport()}
-            </p>
-          </motion.div>
+            {/* Munculin Report Disini */}
+            {getReport()}
 
+          </motion.div>
         </div>
       </div>
     </motion.div>
