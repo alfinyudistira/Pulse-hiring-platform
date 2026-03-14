@@ -284,6 +284,11 @@ function Calculator() {
             </button>
 
           </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 // ── FUNNEL ──
 function FunnelChart() {
