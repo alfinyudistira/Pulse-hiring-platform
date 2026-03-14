@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
+
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const COMPETENCIES = [
@@ -669,6 +672,9 @@ export default function App() {
         button:hover { opacity: 0.85; }
         input:focus, textarea:focus, select:focus { outline: 1px solid #C8A97E44; }
       `}</style>
+      <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
+export default App;
