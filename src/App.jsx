@@ -120,6 +120,7 @@ function NavBar({ active, setActive }) {
     { id: "di", label: "D&I Dashboard", icon: "🌐" },
     { id: "onboarding", label: "Onboarding", icon: "🗓" },
     { id: "questions", label: "Question Bank", icon: "💬" },
+    { id: "bi", label: "Executive BI", icon: "📈" },
   ];
   return (
     <nav style={{ background: "#0D0D0D", borderBottom: "1px solid #2A2A2A", padding: "0 2rem", display: "flex", gap: "0.25rem", overflowX: "auto", flexShrink: 0 }}>
@@ -1486,6 +1487,68 @@ function QuestionBank() {
   );
 }
 
+// ── EXECUTIVE BI COMMAND CENTER ──
+function ExecutiveBI() {
+  const [stats] = useState(() => JSON.parse(localStorage.getItem("pulse_stats") || '{"scores":[]}'));
+  const [candidates] = useState(() => {
+    // Mengambil data detail kandidat dari localStorage jika ada, atau simulasi data
+    return JSON.parse(localStorage.getItem("pulse_candidates") || "[]");
+  });
+
+  const total = stats.scores.length;
+  const avgScore = total > 0 ? (stats.scores.reduce((a, b) => a + b, 0) / total).toFixed(2) : 0;
+  
+  // Data untuk Pie Chart: Rasio Keputusan
+  const pieData = [
+    { name: 'Strong Hire', value: stats.scores.filter(s => s >= 4.0).length, color: "#74C476" },
+    { name: 'Maybe/Hire', value: stats.scores.filter(s => s >= 3.0 && s < 4.0).length, color: "#C8A97E" },
+    { name: 'No Hire', value: stats.scores.filter(s => s < 3.0).length, color: "#E8835A" },
+  ].filter(d => d.value > 0);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
+      <div style={{ marginBottom: "2rem" }}>
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Module 08 — Business Intelligence</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", color: "#F0EAE0", margin: "0.5rem 0" }}>Executive Command Center</h2>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+        {/* KPI Cards */}
+        <div style={{ background: "#111", padding: "1.5rem", borderRadius: 8, border: "1px solid #1E1E1E", textAlign: "center" }}>
+          <div style={{ color: "#666", fontSize: "0.7rem", textTransform: "uppercase" }}>Avg. Technical Merit</div>
+          <div style={{ color: "#C8A97E", fontSize: "3rem", fontWeight: "bold", fontFamily: "'Playfair Display', serif" }}>{avgScore}</div>
+        </div>
+        <div style={{ background: "#111", padding: "1.5rem", borderRadius: 8, border: "1px solid #1E1E1E", textAlign: "center" }}>
+          <div style={{ color: "#666", fontSize: "0.7rem", textTransform: "uppercase" }}>Total Candidates Processed</div>
+          <div style={{ color: "#F0EAE0", fontSize: "3rem", fontWeight: "bold", fontFamily: "'Playfair Display', serif" }}>{total}</div>
+        </div>
+      </div>
+
+      <div style={{ background: "#0A0A0A", padding: "2rem", borderRadius: 8, border: "1px solid #1E1E1E" }}>
+        <h3 style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", marginBottom: "2rem", textTransform: "uppercase" }}>[ Hiring Quality Distribution ]</h3>
+        {total > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={pieData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#888' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }} />
+              <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ color: "#444", textAlign: "center", padding: "3rem" }}>Awaiting data for intelligence mapping...</div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 function Hero({ onStart, stats, onReset }) {
   return (
@@ -1610,7 +1673,7 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const views = { calculator: Calculator, funnel: FunnelChart, salary: SalaryBench, scorecard: Scorecard, di: DIMetrics, onboarding: Onboarding, questions: QuestionBank };
+  const views = { calculator: Calculator, funnel: FunnelChart, salary: SalaryBench, scorecard: Scorecard, di: DIMetrics, onboarding: Onboarding, questions: QuestionBank, bi: ExecutiveBI };
 const ActiveView = views[activeTab];
 const viewProps = { showToast, fireConfetti, recordEval };
 
