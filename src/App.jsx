@@ -609,20 +609,59 @@ function SalaryBench() {
   );
 }
 
-
 // ── SCORECARD ──
 function Scorecard() {
   const [candidate, setCandidate] = useState("");
+  const [university, setUniversity] = useState("");
+  const [company, setCompany] = useState("");
   const [interviewer, setInterviewer] = useState("");
-  const [round, setRound] = useState("Round 1");
+  const [round, setRound] = useState("Round 1 — Initial Screening");
   const [scores, setScores] = useState({});
   const [notes, setNotes] = useState({});
   const [isBlindMode, setIsBlindMode] = useState(false); 
+
+  // Stage-Gate Logic: Matikan Blind Mode otomatis kalau bukan Round 1
+  useEffect(() => {
+    if (round !== "Round 1 — Initial Screening") {
+      setIsBlindMode(false);
+    }
+  }, [round]);
   
   const decision = getDecision(scores);
   const allFilled = COMPETENCIES.every(c => scores[c.id] !== undefined);
-
   const handlePrint = () => window.print();
+
+  // Structured Rubric Intelligence (Dari PDF Interview Scoring Rubric)
+  const getRubricText = (compId, score) => {
+    if (!score) return "Select a score to view rubric criteria.";
+    if (score >= 4) {
+      const texts = {
+        analytics: "Builds custom reports, understands multi-touch attribution.",
+        paid: "Manages large budgets efficiently, optimizes ROAS/CAC.",
+        seo: "Deep technical SEO & content architecture knowledge.",
+        copy: "Drives conversions, adapts brand voice perfectly.",
+        abtesting: "Uses statistical significance and clear hypothesis.",
+        email: "Designs complex automations, maintains high deliverability.",
+        social: "Focuses on community building and viral mechanics.",
+        pm: "Flawless execution, Agile/Scrum methodology mastery."
+      };
+      return <span style={{color: "#74C476"}}>✅ <strong>Green Flag:</strong> {texts[compId]}</span>;
+    } else if (score === 3) {
+       return <span style={{color: "#E8C35A"}}>⚖️ <strong>Standard:</strong> Meets baseline expectations. Needs guidance for complex strategy.</span>;
+    } else {
+      const texts = {
+        analytics: "Only tracks vanity metrics (likes, pageviews).",
+        paid: "Wastes budget, poor targeting, relies on broad match.",
+        seo: "Keyword stuffing, ignores technical & off-page SEO.",
+        copy: "Generic AI-like text, poor grammar, no brand alignment.",
+        abtesting: "Tests randomly without hypothesis or statistical rigor.",
+        email: "Spammy tactics, ignores list segmentation.",
+        social: "Only posts updates, lacks engagement/community strategy.",
+        pm: "Misses deadlines consistently, poor team communication."
+      };
+      return <span style={{color: "#E8835A"}}>⚠️ <strong>Red Flag:</strong> {texts[compId]}</span>;
+    }
+  };
 
   return (
     <motion.div 
@@ -632,59 +671,105 @@ function Scorecard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "0.5rem", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 04 — Interview Evaluation</p>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Interview Scorecard</h2>
+          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Structured Scorecard</h2>
         </div>
         
-        {/* Tombol Blind Mode */}
-        <button onClick={() => setIsBlindMode(!isBlindMode)} style={{
-          background: isBlindMode ? "#C8A97E" : "#111", border: `1px solid ${isBlindMode ? "#C8A97E" : "#2A2A2A"}`,
-          color: isBlindMode ? "#0D0D0D" : "#888", padding: "0.6rem 1rem", borderRadius: 6,
-          fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer",
-          marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", transition: "all 0.3s"
-        }}>
-          {isBlindMode ? "👁️‍🗨️ BLIND MODE: ON" : "👁️ BLIND MODE: OFF"}
+        {/* Tombol Blind Mode (Bisa Disable) */}
+        <button 
+          onClick={() => setIsBlindMode(!isBlindMode)} 
+          disabled={round !== "Round 1 — Initial Screening"}
+          style={{
+            background: isBlindMode ? "#74C476" : "#111", border: `1px solid ${isBlindMode ? "#74C476" : "#2A2A2A"}`,
+            color: isBlindMode ? "#0D0D0D" : "#888", padding: "0.6rem 1rem", borderRadius: 6,
+            fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700, 
+            cursor: round !== "Round 1 — Initial Screening" ? "not-allowed" : "pointer",
+            marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem", transition: "all 0.3s",
+            opacity: round !== "Round 1 — Initial Screening" ? 0.4 : 1
+          }}>
+          {isBlindMode ? "👁️‍🗨️ BLIND MODE: ACTIVE" : "👁️ BLIND MODE: OFF"}
         </button>
       </div>
+      
+      {round !== "Round 1 — Initial Screening" && (
+        <div style={{ color: "#E8835A", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textAlign: "right", marginTop: "-1.5rem", marginBottom: "1.5rem" }}>
+          *Blind mode is disabled for advanced interview rounds.
+        </div>
+      )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "2rem" }}>
+      {/* Grid Profil Kandidat dengan Fitur Redaction */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2rem", background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+        
+        {/* Nama */}
         <div>
           <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Candidate Name</label>
-          <input value={candidate} onChange={e => setCandidate(e.target.value)} placeholder="Full Name"
+          <input 
+            value={isBlindMode && candidate ? `ID: #${(candidate.length * 84).toString().padStart(4, '0')}` : candidate} 
+            onChange={e => setCandidate(e.target.value)} placeholder="Full Name" disabled={isBlindMode}
             style={{ 
-              background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", 
-              padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", 
-              width: "100%", boxSizing: "border-box",
-              filter: isBlindMode && candidate ? "blur(5px)" : "none",
-              transition: "filter 0.3s ease"
+              background: isBlindMode && candidate ? "#0A1A0A" : "#141414", border: "1px solid #2A2A2A", borderRadius: 4, 
+              color: isBlindMode && candidate ? "#74C476" : "#F0EAE0", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", 
+              fontSize: "0.8rem", width: "100%", boxSizing: "border-box", transition: "all 0.3s"
             }} 
-            disabled={isBlindMode}
           />
         </div>
+
+        {/* Kampus */}
+        <div>
+          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>University</label>
+          <input 
+            value={isBlindMode && university ? `[UNIVERSITY TIER ${university.length % 3 + 1}]` : university} 
+            onChange={e => setUniversity(e.target.value)} placeholder="e.g. ITB / UI" disabled={isBlindMode}
+            style={{ 
+              background: isBlindMode && university ? "#0A1A0A" : "#141414", border: "1px solid #2A2A2A", borderRadius: 4, 
+              color: isBlindMode && university ? "#74C476" : "#F0EAE0", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", 
+              fontSize: "0.8rem", width: "100%", boxSizing: "border-box", transition: "all 0.3s"
+            }} 
+          />
+        </div>
+
+        {/* Perusahaan Lama */}
+        <div>
+          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Prev. Company</label>
+          <input 
+            value={isBlindMode && company ? `[REDACTED EMPLOYER]` : company} 
+            onChange={e => setCompany(e.target.value)} placeholder="e.g. Gojek / Shopee" disabled={isBlindMode}
+            style={{ 
+              background: isBlindMode && company ? "#0A1A0A" : "#141414", border: "1px solid #2A2A2A", borderRadius: 4, 
+              color: isBlindMode && company ? "#74C476" : "#F0EAE0", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", 
+              fontSize: "0.8rem", width: "100%", boxSizing: "border-box", transition: "all 0.3s"
+            }} 
+          />
+        </div>
+
+        {/* Interviewer */}
         <div>
           <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Interviewer</label>
           <input value={interviewer} onChange={e => setInterviewer(e.target.value)} placeholder="Your Name"
             style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", width: "100%", boxSizing: "border-box" }} />
         </div>
+
+        {/* Round Dropdown */}
         <div>
-          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Interview Round</label>
+          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Stage Gate</label>
           <select value={round} onChange={e => setRound(e.target.value)}
-            style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", width: "100%", boxSizing: "border-box" }}>
-            <option>Round 1 — Phone Screen</option>
-            <option>Round 2 — Assessment</option>
-            <option>Round 3 — Leadership</option>
+            style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#C8A97E", padding: "0.65rem 0.9rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", width: "100%", boxSizing: "border-box", fontWeight: "bold" }}>
+            <option>Round 1 — Initial Screening</option>
+            <option>Round 2 — Case Study Assessment</option>
+            <option>Round 3 — Team & Culture Interview</option>
           </select>
         </div>
       </div>
 
+      {/* Grid Competencies dengan Rubrik Otomatis */}
       <div style={{ display: "grid", gap: "0.75rem", marginBottom: "2rem" }}>
         {COMPETENCIES.map(c => (
-          <motion.div whileHover={{ scale: 1.01 }} key={c.id} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1rem 1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: notes[c.id] !== undefined ? "0.75rem" : 0 }}>
+          <motion.div whileHover={{ scale: 1.01 }} key={c.id} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1.25rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <span>{c.icon}</span>
                 <div>
                   <div style={{ color: "#DDD", fontSize: "0.85rem", fontWeight: 500 }}>{c.short}</div>
-                  {c.critical && <span style={{ color: "#E8835A", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem" }}>● CRITICAL</span>}
+                  {c.critical && <span style={{ color: "#E8835A", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem" }}>● CRITICAL HURDLE</span>}
                 </div>
               </div>
               <div style={{ display: "flex", gap: "0.35rem", alignItems: "center" }}>
@@ -698,50 +783,61 @@ function Scorecard() {
                   }}>{n}</button>
                 ))}
                 <button onClick={() => setNotes(n => ({ ...n, [c.id]: n[c.id] !== undefined ? undefined : "" }))}
-                  style={{ background: "transparent", border: "1px solid #2E2E2E", borderRadius: 4, color: "#555", width: 34, height: 34, cursor: "pointer", fontSize: "0.85rem" }}>
+                  style={{ background: "transparent", border: "1px solid #2E2E2E", borderRadius: 4, color: "#555", width: 34, height: 34, cursor: "pointer", fontSize: "0.85rem", marginLeft: "0.5rem" }}>
                   📝
                 </button>
               </div>
             </div>
+            
+            {/* Rubric Intelligence Box */}
+            <div style={{ background: "#0A0A0A", borderLeft: `2px solid ${scores[c.id] >= 4 ? "#74C476" : scores[c.id] === 3 ? "#E8C35A" : scores[c.id] ? "#E8835A" : "#333"}`, padding: "0.6rem 0.8rem", fontSize: "0.75rem", fontFamily: "'DM Mono', monospace", color: "#888", marginBottom: notes[c.id] !== undefined ? "0.75rem" : 0 }}>
+              {getRubricText(c.id, scores[c.id])}
+            </div>
+
             {notes[c.id] !== undefined && (
               <textarea value={notes[c.id]} onChange={e => setNotes(n => ({ ...n, [c.id]: e.target.value }))}
-                placeholder="Observed behaviors / evidence..."
-                style={{ background: "#0D0D0D", border: "1px solid #2A2A2A", borderRadius: 4, color: "#AAA", padding: "0.5rem 0.75rem", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: 60 }} />
+                placeholder="Observed behaviors / specific evidence supporting this score..."
+                style={{ background: "#0D0D0D", border: "1px solid #2A2A2A", borderRadius: 4, color: "#AAA", padding: "0.75rem", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: 60 }} />
             )}
           </motion.div>
         ))}
       </div>
 
+      {/* Hasil Keputusan */}
       {allFilled && (
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ background: "#111", border: `2px solid ${decision.color}`, borderRadius: 8, padding: "1.5rem", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
             <div>
-              <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Scorecard Result</div>
-              <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.1rem", marginTop: "0.25rem", filter: isBlindMode && candidate ? "blur(4px)" : "none", transition: "filter 0.3s" }}>
-                {candidate || "Candidate"} · {round}
+              <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Final Assessment Result</div>
+              <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.2rem", marginTop: "0.25rem", color: isBlindMode && candidate ? "#74C476" : "#F0EAE0", transition: "color 0.3s" }}>
+                {isBlindMode && candidate ? `ID: #${(candidate.length * 84).toString().padStart(4, '0')}` : (candidate || "Anonymous Candidate")} 
+                <span style={{ fontSize: "0.8rem", color: "#888", display: "block", fontFamily: "'DM Mono', monospace", marginTop: "0.2rem" }}>{round}</span>
               </div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ color: decision.color, fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{decision.score.toFixed(2)}</div>
+              <div style={{ color: decision.color, fontFamily: "'Playfair Display', serif", fontSize: "2.8rem", fontWeight: 700 }}>{decision.score.toFixed(2)}</div>
               <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>weighted avg / 5.00</div>
             </div>
-            <div style={{ background: `${decision.color}22`, border: `1px solid ${decision.color}`, borderRadius: 4, padding: "0.75rem 1.25rem", color: decision.color, fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700, textAlign: "center", maxWidth: 200 }}>
+            <div style={{ background: `${decision.color}22`, border: `1px solid ${decision.color}`, borderRadius: 4, padding: "0.75rem 1.25rem", color: decision.color, fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: 700, textAlign: "center", maxWidth: 220 }}>
               {decision.label}
             </div>
           </div>
-          {interviewer && <div style={{ marginTop: "1rem", color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>Evaluated by: {interviewer} · {new Date().toLocaleDateString()}</div>}
+          {interviewer && <div style={{ marginTop: "1rem", borderTop: "1px solid #222", paddingTop: "1rem", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textTransform: "uppercase" }}>Evaluated by: {interviewer} · Date: {new Date().toLocaleDateString()}</div>}
         </motion.div>
       )}
 
       <button onClick={handlePrint} style={{
-        background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 4,
-        color: "#888", padding: "0.75rem 1.5rem", fontFamily: "'DM Mono', monospace",
+        background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 4, width: "100%",
+        color: "#888", padding: "1rem", fontFamily: "'DM Mono', monospace",
         fontSize: "0.75rem", letterSpacing: "0.08em", textTransform: "uppercase",
-        cursor: "pointer"
-      }}>⬡ Print / Export Scorecard</button>
+        cursor: "pointer", fontWeight: "bold", transition: "background 0.3s"
+      }} onMouseOver={(e) => e.target.style.background = "#2A2A2A"} onMouseOut={(e) => e.target.style.background = "#1A1A1A"}>
+        ⬡ Print / Export Scorecard
+      </button>
     </motion.div>
   );
 }
+
 
 
 // ── D&I ──
