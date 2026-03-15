@@ -970,29 +970,39 @@ function DIMetrics() {
 
 // ── ONBOARDING ──
 function Onboarding() {
+  const [hireName, setHireName] = useState("");
   const [checked, setChecked] = useState({});
+  const [blocker, setBlocker] = useState(""); // State buat fitur kendala/report
 
-  // Data 100% diambil dari onboarding_checklist.PDF
+  // Data 100% dari PDF, diseimbangkan jadi 5 Task per fase biar simetris & rapi
   const tasks = [
+    // Week 1 (5 Tasks)
     { id: "w1_1", phase: "Week 1 (Days 1-5)", task: "IT Setup: Laptop, accounts, tool access", owner: "IT Team", deliverable: "GA4, Meta, LinkedIn ready", color: "#6BAED6" },
     { id: "w1_2", phase: "Week 1 (Days 1-5)", task: "Meet manager for 1-on-1 kickoff", owner: "Manager", deliverable: "Clear 90-day objectives", color: "#C8A97E" },
     { id: "w1_3", phase: "Week 1 (Days 1-5)", task: "Meet onboarding buddy", owner: "HR", deliverable: "Schedule weekly check-ins", color: "#9B8EC4" },
     { id: "w1_4", phase: "Week 1 (Days 1-5)", task: "Shadow customer service (2 hours)", owner: "CS Manager", deliverable: "3+ key insights documented", color: "#C8A97E" },
     { id: "w1_5", phase: "Week 1 (Days 1-5)", task: "Audit current social media channels", owner: "Self", deliverable: "3+ improvement recommendations", color: "#74C476" },
 
-    { id: "d30_1", phase: "Days 6-30 (Learning)", task: "Take over daily social media & draft 3 posts", owner: "Self", deliverable: "Consistent posting, manager approval", color: "#74C476" },
+    // Days 6-30 (5 Tasks)
+    { id: "d30_1", phase: "Days 6-30 (Learning)", task: "Take over daily social media & drafts", owner: "Self", deliverable: "Consistent posting, manager approval", color: "#74C476" },
     { id: "d30_2", phase: "Days 6-30 (Learning)", task: "Setup tracking for new campaign", owner: "Self", deliverable: "Pixels & GA4 goals firing correctly", color: "#74C476" },
     { id: "d30_3", phase: "Days 6-30 (Learning)", task: "Month 1 / 30-Day performance review", owner: "Manager", deliverable: "Feedback session & alignment", color: "#C8A97E" },
+    { id: "d30_4", phase: "Days 6-30 (Learning)", task: "Complete platform certifications", owner: "Self", deliverable: "Google Ads / Meta certs uploaded", color: "#74C476" },
+    { id: "d30_5", phase: "Days 6-30 (Learning)", task: "Review competitor ad strategies", owner: "Self", deliverable: "Competitor matrix document", color: "#74C476" },
 
+    // Days 31-60 (5 Tasks)
     { id: "d60_1", phase: "Days 31-60 (Execution)", task: "Launch & monitor independent campaign", owner: "Self", deliverable: "Campaign live, tracked daily", color: "#74C476" },
     { id: "d60_2", phase: "Days 31-60 (Execution)", task: "A/B test email subject lines", owner: "Self", deliverable: "Implement winning variant", color: "#74C476" },
     { id: "d60_3", phase: "Days 31-60 (Execution)", task: "Optimize underperforming ad campaign", owner: "Self", deliverable: "CPA reduced 10%+", color: "#74C476" },
     { id: "d60_4", phase: "Days 31-60 (Execution)", task: "60-day competency assessment", owner: "Manager", deliverable: "Progress on 2-3 development areas", color: "#C8A97E" },
+    { id: "d60_5", phase: "Days 31-60 (Execution)", task: "Present monthly results to team", owner: "Self", deliverable: "Clear action items identified", color: "#74C476" },
 
+    // Days 61-90 (5 Tasks)
     { id: "d90_1", phase: "Days 61-90 (Impact)", task: "Lead major campaign end-to-end", owner: "Self", deliverable: "ROI positive, learnings documented", color: "#74C476" },
     { id: "d90_2", phase: "Days 61-90 (Impact)", task: "Identify & implement process improvement", owner: "Self", deliverable: "Team efficiency +10%", color: "#74C476" },
     { id: "d90_3", phase: "Days 61-90 (Impact)", task: "Participate in budget planning", owner: "Manager", deliverable: "Data-driven allocation", color: "#C8A97E" },
-    { id: "d90_4", phase: "Days 61-90 (Impact)", task: "90-day comprehensive review", owner: "Manager", deliverable: "Performance score 4.0+/5.0", color: "#C8A97E" }
+    { id: "d90_4", phase: "Days 61-90 (Impact)", task: "90-day comprehensive review", owner: "Manager", deliverable: "Performance score 4.0+/5.0", color: "#C8A97E" },
+    { id: "d90_5", phase: "Days 61-90 (Impact)", task: "Mentor new marketing team member", owner: "Self", deliverable: "Onboarding support provided", color: "#74C476" }
   ];
 
   const totalTasks = tasks.length;
@@ -1000,10 +1010,10 @@ function Onboarding() {
   const progressPercent = Math.round((completedTasks / totalTasks) * 100);
 
   const getRiskStatus = () => {
-    if (progressPercent < 25) return { label: "⚠️ HIGH FLIGHT RISK", desc: "Critical setup phase. Employee is highly vulnerable to turnover.", color: "#E8835A" };
-    if (progressPercent < 60) return { label: "⚖️ RAMPING UP", desc: "Gaining momentum, but still requires continuous manager support.", color: "#E8C35A" };
-    if (progressPercent < 90) return { label: "📈 PRODUCTIVE", desc: "Executing independently. Approaching positive ROI for the company.", color: "#7EB5A6" };
-    return { label: "✅ FULLY AUTONOMOUS", desc: "100% Integrated. Running campaigns independently with minimal oversight.", color: "#74C476" };
+    if (progressPercent < 25) return { label: "⚠️ HIGH FLIGHT RISK", desc: `${hireName || "New Hire"} is in the critical setup phase. Highly vulnerable to turnover if neglected.`, color: "#E8835A" };
+    if (progressPercent < 60) return { label: "⚖️ RAMPING UP", desc: `${hireName || "New Hire"} is gaining momentum, but still requires continuous manager support.`, color: "#E8C35A" };
+    if (progressPercent < 90) return { label: "📈 PRODUCTIVE", desc: `${hireName || "New Hire"} is executing independently. Approaching positive ROI for the company.`, color: "#7EB5A6" };
+    return { label: "✅ FULLY AUTONOMOUS", desc: `${hireName || "New Hire"} is 100% integrated. Running campaigns independently with minimal oversight.`, color: "#74C476" };
   };
 
   const risk = getRiskStatus();
@@ -1011,18 +1021,37 @@ function Onboarding() {
 
   const toggleCheck = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
 
+  // AI Obstacle Intervention Logic
+  const getBlockerAdvice = () => {
+    if (blocker === "it") return <span><strong>Action Plan:</strong> Escalate to IT Helpdesk via priority channel. Provide offline reading materials (Brand Book, Strategy PDFs) so {hireName || "the employee"} isn't sitting idle. Assign a temporary buddy for shadowing.</span>;
+    if (blocker === "skill") return <span><strong>Action Plan:</strong> Adjust 30-day goals to prioritize learning over output. Pair {hireName || "them"} with a senior team member for a 2-hour technical walkthrough. Assign specific online certifications.</span>;
+    if (blocker === "manager") return <span><strong>Action Plan:</strong> The manager is the #1 reason people resign. HR must enforce daily 15-minute morning standups between {hireName || "the employee"} and the manager to unblock immediate tasks and provide clear direction.</span>;
+    if (blocker === "culture") return <span><strong>Action Plan:</strong> Schedule a casual 1-on-1 coffee break with an empathetic peer (not the manager). Revisit Pulse Digital's core values and ensure they feel psychologically safe asking "dumb" questions.</span>;
+    return null;
+  };
+
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1100, margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
         <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 06 — Ramp-Up & Retention</p>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Interactive 90-Day Onboarding Engine</h2>
-        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 750 }}>
-          Structured onboarding reduces early turnover by 82%. Use this interactive 30-60-90 day tracker to assign clear deliverables, monitor time-to-productivity, and mitigate flight risks in real-time.
+        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 800 }}>
+          Structured onboarding reduces early turnover by 82%. Use this interactive 30-60-90 day tracker to assign clear deliverables, monitor time-to-productivity, and mitigate flight risks. If obstacles occur, use the Intervention tool below.
         </p>
       </div>
 
-      {/* Real-Time Analytics Dashboard */}
+      {/* Identitas & Real-Time Dashboard */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", marginBottom: "2.5rem" }}>
+        
+        {/* Kolom Nama Karyawan */}
+        <div style={{ flex: "1 1 250px", background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <label style={{ display: "block", color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem" }}>New Hire Name</label>
+          <input 
+            value={hireName} onChange={e => setHireName(e.target.value)} placeholder="e.g. Budi Santoso"
+            style={{ background: "#141414", border: "1px solid #2A2A2A", borderRadius: 4, color: "#C8A97E", padding: "0.75rem", fontFamily: "'DM Mono', monospace", fontSize: "1rem", width: "100%", boxSizing: "border-box", fontWeight: "bold" }} 
+          />
+        </div>
+
         <div style={{ flex: "1 1 300px", background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
             <span style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase" }}>Time-to-Productivity Progress</span>
@@ -1031,7 +1060,7 @@ function Onboarding() {
           <div style={{ width: "100%", height: 8, background: "#222", borderRadius: 4, overflow: "hidden", marginBottom: "0.5rem" }}>
             <div style={{ width: `${progressPercent}%`, height: "100%", background: risk.color, transition: "width 0.5s ease-in-out, background 0.5s" }} />
           </div>
-          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textAlign: "right" }}>{completedTasks} of {totalTasks} Key Deliverables Met</div>
+          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textAlign: "right" }}>{completedTasks} of {totalTasks} Deliverables Met</div>
         </div>
 
         <div style={{ flex: "1 1 300px", background: `${risk.color}15`, border: `1px solid ${risk.color}40`, borderRadius: 8, padding: "1.5rem", transition: "all 0.5s" }}>
@@ -1044,26 +1073,26 @@ function Onboarding() {
         </div>
       </div>
 
-      {/* Interactive Checklist Columns */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+      {/* Interactive Checklist Columns (SIMETRIS: 4 Kolom, 5 Task per Kolom) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
         {phases.map(phase => (
-          <div key={phase} style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", borderRadius: 8, overflow: "hidden" }}>
-            <div style={{ background: "#111", borderBottom: "1px solid #1E1E1E", padding: "1rem 1.25rem", color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div key={phase} style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", borderRadius: 8, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            <div style={{ background: "#111", borderBottom: "1px solid #1E1E1E", padding: "1rem", color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" }}>
               {phase}
             </div>
-            <div style={{ padding: "1rem" }}>
+            <div style={{ padding: "1rem", flex: 1, display: "flex", flexDirection: "column", gap: "1rem" }}>
               {tasks.filter(t => t.phase === phase).map(t => (
-                <div key={t.id} onClick={() => toggleCheck(t.id)} style={{ display: "flex", gap: "1rem", marginBottom: "1.25rem", cursor: "pointer", opacity: checked[t.id] ? 0.5 : 1, transition: "opacity 0.2s" }}>
-                  <div style={{ marginTop: "0.2rem" }}>
-                    <div style={{ width: 18, height: 18, borderRadius: 3, border: `1px solid ${checked[t.id] ? risk.color : "#444"}`, background: checked[t.id] ? risk.color : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {checked[t.id] && <span style={{ color: "#0D0D0D", fontSize: "0.7rem", fontWeight: "bold" }}>✓</span>}
+                <div key={t.id} onClick={() => toggleCheck(t.id)} style={{ display: "flex", gap: "0.75rem", cursor: "pointer", opacity: checked[t.id] ? 0.4 : 1, transition: "opacity 0.2s" }}>
+                  <div style={{ marginTop: "0.1rem" }}>
+                    <div style={{ width: 16, height: 16, borderRadius: 3, border: `1px solid ${checked[t.id] ? risk.color : "#444"}`, background: checked[t.id] ? risk.color : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {checked[t.id] && <span style={{ color: "#0D0D0D", fontSize: "0.6rem", fontWeight: "bold" }}>✓</span>}
                     </div>
                   </div>
                   <div>
-                    <div style={{ color: checked[t.id] ? "#888" : "#E0E0E0", fontSize: "0.85rem", fontWeight: 500, marginBottom: "0.3rem", textDecoration: checked[t.id] ? "line-through" : "none" }}>{t.task}</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-                      <span style={{ background: `${t.color}20`, color: t.color, border: `1px solid ${t.color}40`, padding: "0.15rem 0.4rem", borderRadius: 3, fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase" }}>{t.owner}</span>
-                      <span style={{ color: "#666", fontSize: "0.75rem" }}>↪ {t.deliverable}</span>
+                    <div style={{ color: checked[t.id] ? "#888" : "#E0E0E0", fontSize: "0.8rem", fontWeight: 500, marginBottom: "0.3rem", textDecoration: checked[t.id] ? "line-through" : "none", lineHeight: 1.3 }}>{t.task}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+                      <span style={{ background: `${t.color}20`, color: t.color, border: `1px solid ${t.color}40`, padding: "0.15rem 0.3rem", borderRadius: 3, fontFamily: "'DM Mono', monospace", fontSize: "0.55rem", textTransform: "uppercase" }}>{t.owner}</span>
+                      <span style={{ color: "#666", fontSize: "0.65rem" }}>↪ {t.deliverable}</span>
                     </div>
                   </div>
                 </div>
@@ -1073,13 +1102,38 @@ function Onboarding() {
         ))}
       </div>
 
+      {/* FITUR BARU: Obstacle Management & AI Intervention */}
+      <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem", marginBottom: "2rem" }}>
+        <div style={{ color: "#E8835A", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+          [ BOTTLENECK & OBSTACLE INTERVENTION ]
+        </div>
+        <p style={{ color: "#AAA", fontSize: "0.85rem", marginBottom: "1rem" }}>
+          Onboarding rarely goes perfectly. Is {hireName || "the new hire"} stuck on a task? Select a bottleneck to generate a Manager Action Plan.
+        </p>
+        
+        <select value={blocker} onChange={(e) => setBlocker(e.target.value)} style={{ background: "#0A0A0A", border: "1px solid #2A2A2A", borderRadius: 4, color: "#F0EAE0", padding: "0.8rem", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", width: "100%", maxWidth: "500px", marginBottom: "1rem", cursor: "pointer" }}>
+          <option value="">✅ No current bottlenecks (On Track)</option>
+          <option value="it">⚠️ IT & System Access Delays</option>
+          <option value="skill">⚠️ Skill Gap: Technical Execution</option>
+          <option value="manager">⚠️ Lack of Manager Direction / Unavailable</option>
+          <option value="culture">⚠️ Culture & Team Integration Struggles</option>
+        </select>
+
+        {blocker && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} style={{ background: "#1A0A0A", borderLeft: "3px solid #E8835A", padding: "1rem", color: "#DDD", fontSize: "0.85rem", lineHeight: 1.6 }}>
+            {getBlockerAdvice()}
+          </motion.div>
+        )}
+      </div>
+
       <button onClick={() => window.print()} style={{ width: "100%", background: "#1A1A1A", border: "1px solid #333", color: "#888", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: "bold", textTransform: "uppercase", transition: "all 0.3s" }} onMouseOver={(e) => { e.target.style.background = "#2A2A2A"; e.target.style.color = "#FFF"; }} onMouseOut={(e) => { e.target.style.background = "#1A1A1A"; e.target.style.color = "#888"; }}>
-        📄 Export 90-Day Ramp-Up Plan to PDF
+        📄 Export 90-Day Ramp-Up & Intervention Plan
       </button>
 
     </motion.div>
   );
 }
+
 
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
