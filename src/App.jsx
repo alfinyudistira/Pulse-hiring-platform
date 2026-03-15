@@ -2389,9 +2389,9 @@ function EmailDraftGenerator({ candidateName, decision, decisionColor, score, sa
           messages: [{ role: "user", content: prompts[emailType] }]
         })
       });
-      const data = await response.json();
-      setDraft("RAW: " + JSON.stringify(data));
-return;
+          const data = await response.json();
+    setDraft(data.content?.[0]?.text || "Failed to generate email draft.");
+
     } catch (e) {
   setDraft("ERROR: " + e.message + " | " + JSON.stringify(e));
 }
