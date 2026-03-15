@@ -359,8 +359,9 @@ function Calculator() {
       </table>
     </div>
   </div>
-)}
-          </motion.div>
+}}
+        </motion.div>
+          
         </div>
       </div>
     </motion.div>
