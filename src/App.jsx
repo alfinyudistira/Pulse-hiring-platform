@@ -1593,7 +1593,7 @@ const viewProps = { showToast, fireConfetti, recordEval };
   {toast && <Toast message={toast.message} color={toast.color} onDone={() => setToast(null)} />}
 </AnimatePresence>
 {showConfetti && <Confetti />}
-      <Analytics />
+            <Analytics />
       <SpeedInsights />
     </div>
   );
