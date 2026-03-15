@@ -183,6 +183,7 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
   const [scores, setScores] = useState({});
   const [softScores, setSoftScores] = useState({});
   const [savedCandidates, setSavedCandidates] = useState([]);
+  const [showComparison, setShowComparison] = useState(false);
     // Fungsi Export ke CSV
   const downloadCSV = () => {
     if (savedCandidates.length === 0) {
@@ -434,11 +435,32 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
               />
             )}
             
-            {/* Tombol Print / Download PDF */}
-            <button onClick={() => window.print()} 
-              style={{ width: "100%", marginTop: "1.5rem", background: "#C8A97E", border: "none", color: "#0D0D0D", padding: "0.8rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
-              📄 Download / Print Candidate Report
-            </button>
+ {/* B2: Proper PDF Export */}
+            {allFilled && (
+              <PDFExportButton
+                label="📄 Export Professional PDF Report"
+                type="Candidate Evaluation"
+                data={{
+                  name: candidateName,
+                  score: decision.score,
+                  grade: decision.grade,
+                  label: finalDecisionLabel,
+                  salary: expectedSalary,
+                  breakEven,
+                  retention,
+                  allSkills: [
+                    ...COMPETENCIES.map(c => ({ ...c, score: scores[c.id] })),
+                    ...([
+                      { id: "comm", short: "Communication", score: softScores["comm"] },
+                      { id: "prob", short: "Problem Solving", score: softScores["prob"] },
+                      { id: "culture", short: "Culture Fit", score: softScores["culture"] },
+                      { id: "adapt", short: "Adaptability", score: softScores["adapt"] },
+                    ])
+                  ],
+                  competencies: COMPETENCIES.map(c => ({ ...c, score: scores[c.id] })),
+                }}
+              />
+            )}
 
             {/* Tombol Reset Pindah Ke Dalam Sini */}
             <button 
@@ -482,9 +504,17 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
           <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Comparison Pool</div>
           <h3 style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", margin: "0.25rem 0 0" }}>Candidate Shortlist</h3>
         </div>
-        <button onClick={() => setSavedCandidates([])} style={{ background: "transparent", border: "1px solid #2A2A2A", color: "#555", padding: "0.5rem 1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>
-          Clear All
-        </button>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <button
+            onClick={() => setShowComparison(true)}
+            disabled={savedCandidates.length < 2}
+            style={{ background: savedCandidates.length >= 2 ? "#1A2A3A" : "transparent", border: `1px solid ${savedCandidates.length >= 2 ? "#6BAED6" : "#2A2A2A"}`, color: savedCandidates.length >= 2 ? "#6BAED6" : "#444", padding: "0.5rem 1rem", borderRadius: 4, cursor: savedCandidates.length >= 2 ? "pointer" : "not-allowed", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", fontWeight: 700 }}>
+            ⚡ Compare Head-to-Head
+          </button>
+          <button onClick={() => setSavedCandidates([])} style={{ background: "transparent", border: "1px solid #2A2A2A", color: "#555", padding: "0.5rem 1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>
+            Clear All
+          </button>
+        </div>
       </div>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'DM Mono', monospace", fontSize: "0.78rem" }}>
@@ -583,6 +613,15 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
         </div>
       </div>
 
+<AnimatePresence>
+        {showComparison && savedCandidates.length >= 2 && (
+          <ComparisonModal
+            candidates={savedCandidates}
+            onClose={() => setShowComparison(false)}
+          />
+        )}
+      </AnimatePresence>
+      
 </motion.div>
 );
 }
@@ -1153,6 +1192,17 @@ function Scorecard() {
         </motion.div>
       )}
 
+{/* B6: Share Scorecard */}
+      {allFilled && (
+        <ShareScorecardButton
+          candidate={candidate}
+          round={round}
+          scores={scores}
+          decision={decision}
+          interviewer={interviewer}
+        />
+      )}
+      
       {/* B4: Smart Notes Summary */}
       <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", marginBottom: "1rem" }}>
         <div style={{ color: "#9B8EC4", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
@@ -1531,6 +1581,50 @@ function QuestionBank() {
 
   const roundColors = { "Round 1": "#C8A97E", "Round 2": "#7EB5A6", "Round 3": "#9B8EC4" };
 
+const [coachLoading, setCoachLoading] = useState({});
+  const [coachOutput, setCoachOutput] = useState({});
+
+  const runCoach = async (q) => {
+    const note = notes[q.id] || "";
+    if (!note.trim()) {
+      setCoachOutput(prev => ({ ...prev, [q.id]: "⚠️ Write a candidate answer in the notes field first, then click Analyze." }));
+      return;
+    }
+    setCoachLoading(prev => ({ ...prev, [q.id]: true }));
+    setCoachOutput(prev => ({ ...prev, [q.id]: "" }));
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `You are a senior HR consultant evaluating a job candidate for a Digital Marketing role at Pulse Digital.
+
+Interview question: "${q.text}"
+Evaluation focus: ${q.intent}
+Candidate's answer (from interviewer notes): "${note}"
+
+Provide:
+1. 🟢 GREEN FLAGS (max 2 bullet points of strong signals)
+2. 🔴 RED FLAGS (max 2 bullet points of weak signals, or "None detected")
+3. 💡 SUGGESTED FOLLOW-UP QUESTION (1 question to probe deeper)
+4. ⭐ SCORE SUGGESTION: X/5 with one sentence reason
+
+Be concise, specific, and actionable. Max 200 words total.`
+          }]
+        })
+      });
+      const data = await response.json();
+      setCoachOutput(prev => ({ ...prev, [q.id]: data.content?.[0]?.text || "Failed to analyze." }));
+    } catch (e) {
+      setCoachOutput(prev => ({ ...prev, [q.id]: "Error. Please try again." }));
+    }
+    setCoachLoading(prev => ({ ...prev, [q.id]: false }));
+  };
+  
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 900, margin: "0 auto" }}>
       <div style={{ marginBottom: "2rem" }}>
@@ -1592,13 +1686,35 @@ function QuestionBank() {
             <textarea
               value={notes[q.id] || ""}
               onChange={e => setNotes(n => ({ ...n, [q.id]: e.target.value }))}
-              placeholder="Add interview notes here..."
-              style={{ background: "#0D0D0D", border: "1px solid #2A2A2A", borderRadius: 4, color: "#AAA", padding: "0.75rem", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: 60 }}
+              placeholder="Paste or type candidate's answer here, then click Analyze Answer below..."
+              style={{ background: "#0D0D0D", border: "1px solid #2A2A2A", borderRadius: 4, color: "#AAA", padding: "0.75rem", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: 80 }}
             />
-          </motion.div>
-        ))}
-      </div>
 
+            {/* B1: AI Coach Button + Output */}
+            <div style={{ marginTop: "0.75rem" }}>
+              <button
+                onClick={() => runCoach(q)}
+                disabled={coachLoading[q.id]}
+                style={{ background: coachLoading[q.id] ? "#111" : "#0F1A2A", border: `1px solid ${coachLoading[q.id] ? "#333" : "#6BAED6"}`, color: coachLoading[q.id] ? "#444" : "#6BAED6", padding: "0.6rem 1rem", borderRadius: 4, cursor: coachLoading[q.id] ? "not-allowed" : "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}
+              >
+                {coachLoading[q.id] ? "⏳ Analyzing..." : "🤖 Analyze Answer with AI"}
+              </button>
+
+              {coachOutput[q.id] && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{ marginTop: "0.75rem", background: "#0A1020", border: "1px solid #6BAED644", borderRadius: 6, padding: "1.25rem" }}
+                >
+                  <div style={{ color: "#6BAED6", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+                    [ AI COACH ANALYSIS ]
+                  </div>
+                  <pre style={{ color: "#CCC", fontSize: "0.8rem", lineHeight: 1.7, whiteSpace: "pre-wrap", fontFamily: "'DM Mono', monospace", margin: 0 }}>
+                    {coachOutput[q.id]}
+                  </pre>
+                </motion.div>
+              )}
+            </div>
       <button onClick={() => window.print()} style={{ width: "100%", marginTop: "2rem", background: "#1A1A1A", border: "1px solid #2A2A2A", color: "#888", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
         📄 Print / Export Question Bank with Notes
       </button>
@@ -1784,6 +1900,434 @@ function ExecutiveBI() {
   );
 }
 
+// ── SHARE SCORECARD ──
+function ShareScorecardButton({ candidate, round, scores, decision, interviewer }) {
+  const [copied, setCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const generateShareLink = () => {
+    // Encode semua data scorecard ke URL params (read-only snapshot)
+    const payload = {
+      c: candidate || "Anonymous",
+      r: round,
+      s: scores,
+      d: decision?.label,
+      sc: decision?.score?.toFixed(2),
+      i: interviewer,
+      t: new Date().toLocaleDateString("id-ID"),
+    };
+    const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
+    return `${window.location.origin}${window.location.pathname}?scorecard=${encoded}`;
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generateShareLink());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  return (
+    <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.25rem", marginBottom: "1rem" }}>
+      <div style={{ color: "#7EB5A6", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+        [ SHARE SCORECARD ]
+      </div>
+
+      <p style={{ color: "#666", fontSize: "0.78rem", lineHeight: 1.6, marginBottom: "1rem" }}>
+        Generate a read-only snapshot link to share with your hiring committee. All scores and notes are encoded in the URL — no server required.
+      </p>
+
+      <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <button
+          onClick={handleCopy}
+          style={{
+            flex: 1,
+            background: copied ? "#1A3A2A" : "#0A1A18",
+            border: `1px solid ${copied ? "#74C476" : "#7EB5A6"}`,
+            color: copied ? "#74C476" : "#7EB5A6",
+            padding: "0.75rem",
+            borderRadius: 4,
+            cursor: "pointer",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            transition: "all 0.3s",
+          }}
+        >
+          {copied ? "✓ Link Copied to Clipboard!" : "🔗 Copy Share Link"}
+        </button>
+
+        <button
+          onClick={() => setShowPreview(!showPreview)}
+          style={{
+            background: "transparent",
+            border: "1px solid #2A2A2A",
+            color: "#555",
+            padding: "0.75rem 1rem",
+            borderRadius: 4,
+            cursor: "pointer",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "0.72rem",
+          }}
+        >
+          {showPreview ? "Hide" : "Preview"}
+        </button>
+      </div>
+
+      {showPreview && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          style={{ marginTop: "1rem", background: "#111", border: "1px solid #7EB5A644", borderRadius: 6, padding: "1.25rem" }}
+        >
+          <div style={{ color: "#7EB5A6", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textTransform: "uppercase", marginBottom: "0.75rem" }}>
+            Scorecard Snapshot Preview
+          </div>
+          <div style={{ display: "grid", gap: "0.5rem" }}>
+            {[
+              { label: "Candidate", val: candidate || "Anonymous" },
+              { label: "Round", val: round },
+              { label: "Interviewer", val: interviewer || "—" },
+              { label: "Decision", val: decision?.label || "—" },
+              { label: "Score", val: `${decision?.score?.toFixed(2) || "—"} / 5.00` },
+              { label: "Date", val: new Date().toLocaleDateString("id-ID") },
+            ].map(row => (
+              <div key={row.label} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem", borderBottom: "1px solid #1A1A1A", paddingBottom: "0.4rem" }}>
+                <span style={{ color: "#555", fontFamily: "'DM Mono', monospace" }}>{row.label}</span>
+                <span style={{ color: "#DDD" }}>{row.val}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: "1rem", color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", wordBreak: "break-all" }}>
+            {generateShareLink().substring(0, 80)}...
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+    
+// ── CANDIDATE COMPARISON MODAL ──
+function ComparisonModal({ candidates, onClose }) {
+  const [selected, setSelected] = useState([0, 1]);
+
+  const a = candidates[selected[0]];
+  const b = candidates[selected[1]];
+
+  if (!a || !b) return null;
+
+  const radarData = COMPETENCIES.map(c => ({
+    subject: c.short,
+    [a.name.split(" ")[0]]: a.scores[c.id] || 0,
+    [b.name.split(" ")[0]]: b.scores[c.id] || 0,
+    fullMark: 5,
+  }));
+
+  const COLORS = ["#C8A97E", "#6BAED6"];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 30 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 30 }}
+        onClick={e => e.stopPropagation()}
+        style={{ background: "#0D0D0D", border: "1px solid #2A2A2A", borderRadius: 12, padding: "2rem", width: "100%", maxWidth: 900, maxHeight: "90vh", overflowY: "auto" }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "1rem" }}>
+          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+            [ HEAD-TO-HEAD COMPARISON ]
+          </div>
+          <button onClick={onClose} style={{ background: "transparent", border: "1px solid #333", color: "#666", padding: "0.4rem 0.8rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>✕ Close</button>
+        </div>
+
+        {/* Selector */}
+        {candidates.length > 2 && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+            {[0, 1].map(slot => (
+              <div key={slot}>
+                <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textTransform: "uppercase", marginBottom: "0.5rem" }}>
+                  {slot === 0 ? "Candidate A" : "Candidate B"}
+                </div>
+                <select
+                  value={selected[slot]}
+                  onChange={e => {
+                    const next = [...selected];
+                    next[slot] = parseInt(e.target.value);
+                    setSelected(next);
+                  }}
+                  style={{ background: "#111", border: "1px solid #2A2A2A", borderRadius: 4, color: COLORS[slot], padding: "0.6rem", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", width: "100%", cursor: "pointer" }}
+                >
+                  {candidates.map((c, i) => (
+                    <option key={i} value={i}>{c.name} ({c.score.toFixed(2)})</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Score Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+          {[a, b].map((cand, idx) => (
+            <div key={idx} style={{ background: "#111", border: `2px solid ${COLORS[idx]}33`, borderRadius: 8, padding: "1.25rem", textAlign: "center" }}>
+              <div style={{ color: COLORS[idx], fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textTransform: "uppercase", marginBottom: "0.5rem" }}>
+                Candidate {idx === 0 ? "A" : "B"}
+              </div>
+              <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.2rem", fontWeight: 700 }}>{cand.name}</div>
+              <div style={{ color: COLORS[idx], fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", fontWeight: 700 }}>{cand.score.toFixed(2)}</div>
+              <div style={{ background: `${cand.color}20`, border: `1px solid ${cand.color}40`, color: cand.color, padding: "0.3rem 0.6rem", borderRadius: 3, fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", display: "inline-block" }}>
+                {cand.label}
+              </div>
+              <div style={{ color: "#666", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", marginTop: "0.5rem" }}>
+                Salary: {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(cand.salary)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Radar Chart */}
+        <div style={{ height: 320, marginBottom: "1.5rem", background: "#111", borderRadius: 8, padding: "1rem", border: "1px solid #1E1E1E" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
+              <PolarGrid stroke="#222" />
+              <PolarAngleAxis dataKey="subject" tick={{ fill: '#666', fontSize: 9, fontFamily: "'DM Mono', monospace" }} />
+              <PolarRadiusAxis angle={30} domain={[0, 5]} tick={{ fill: 'transparent' }} axisLine={false} tickLine={false} />
+              <Radar name={a.name.split(" ")[0]} dataKey={a.name.split(" ")[0]} stroke={COLORS[0]} fill={COLORS[0]} fillOpacity={0.25} />
+              <Radar name={b.name.split(" ")[0]} dataKey={b.name.split(" ")[0]} stroke={COLORS[1]} fill={COLORS[1]} fillOpacity={0.25} />
+              <Legend wrapperStyle={{ fontFamily: "'DM Mono', monospace", fontSize: "0.72rem" }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0D0D0D', border: '1px solid #333', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontSize: '0.75rem' }} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Competency by Competency Breakdown */}
+        <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+            [ COMPETENCY BREAKDOWN ]
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {COMPETENCIES.map(c => {
+              const scoreA = a.scores[c.id] || 0;
+              const scoreB = b.scores[c.id] || 0;
+              const winner = scoreA > scoreB ? 0 : scoreB > scoreA ? 1 : -1;
+              return (
+                <div key={c.id}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+                    <span style={{ color: "#888", fontSize: "0.75rem" }}>{c.icon} {c.short}</span>
+                    {winner !== -1 && (
+                      <span style={{ color: COLORS[winner], fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>
+                        {winner === 0 ? a.name.split(" ")[0] : b.name.split(" ")[0]} wins
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                    {[scoreA, scoreB].map((sc, idx) => (
+                      <div key={idx} style={{ height: 6, background: "#1A1A1A", borderRadius: 3, overflow: "hidden" }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(sc / 5) * 100}%` }}
+                          transition={{ duration: 0.8, delay: 0.1 }}
+                          style={{ height: "100%", background: winner === idx ? COLORS[idx] : `${COLORS[idx]}66`, borderRadius: 3 }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.2rem" }}>
+                    {[scoreA, scoreB].map((sc, idx) => (
+                      <span key={idx} style={{ color: COLORS[idx], fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>{sc}/5</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Winner Declaration */}
+        <div style={{ marginTop: "1.5rem", background: a.score > b.score ? "#0F1A0F" : b.score > a.score ? "#0A1020" : "#111", border: `1px solid ${a.score > b.score ? "#74C476" : b.score > a.score ? "#6BAED6" : "#333"}33`, borderRadius: 8, padding: "1.25rem", textAlign: "center" }}>
+          {a.score === b.score ? (
+            <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem" }}>⚖️ Tied Score — Recommend team deliberation</div>
+          ) : (
+            <>
+              <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textTransform: "uppercase", marginBottom: "0.3rem" }}>Recommended Candidate</div>
+              <div style={{ color: a.score > b.score ? COLORS[0] : COLORS[1], fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", fontWeight: 700 }}>
+                {a.score > b.score ? a.name : b.name}
+              </div>
+              <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", marginTop: "0.25rem" }}>
+                +{Math.abs(a.score - b.score).toFixed(2)} point advantage
+              </div>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── PDF EXPORT ENGINE ──
+function PDFExportButton({ label = "📄 Export Professional PDF", data, type }) {
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleExport = async () => {
+    setLoading(true);
+
+    // Build print-friendly content
+    const printContent = buildPrintContent(data, type);
+
+    // Open in new window and print
+    const win = window.open("", "_blank");
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Pulse Digital — ${type} Report</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;700&display=swap');
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'DM Mono', monospace; background: #fff; color: #111; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { border-bottom: 3px solid #C8A97E; padding-bottom: 20px; margin-bottom: 30px; }
+          .logo { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #C8A97E; margin-bottom: 8px; }
+          .title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: #111; }
+          .subtitle { font-size: 0.75rem; color: #888; margin-top: 4px; }
+          .section { margin-bottom: 24px; padding: 16px; border: 1px solid #E8E8E8; border-radius: 6px; }
+          .section-title { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: #C8A97E; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+          .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+          .kpi { border: 1px solid #E8E8E8; border-radius: 6px; padding: 16px; text-align: center; }
+          .kpi-val { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; color: #C8A97E; }
+          .kpi-label { font-size: 0.65rem; text-transform: uppercase; color: #888; margin-top: 4px; }
+          .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.82rem; }
+          .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; border: 1px solid #C8A97E; color: #C8A97E; }
+          .bar-wrap { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+          .bar-fill { height: 100%; background: #C8A97E; border-radius: 3px; }
+          .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #eee; font-size: 0.65rem; color: #aaa; display: flex; justify-content: space-between; }
+          .decision-box { border: 2px solid #C8A97E; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+          .decision-score { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 700; color: #C8A97E; }
+          .tag { display: inline-block; background: #FFF8F0; border: 1px solid #C8A97E44; color: #C8A97E; padding: 4px 12px; border-radius: 3px; font-size: 0.75rem; font-weight: 700; margin-top: 8px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">✦ Pulse Digital · HR Technical Analysis</div>
+          <div class="title">${type} Report</div>
+          <div class="subtitle">Generated ${new Date().toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+        </div>
+        ${printContent}
+        <div class="footer">
+          <span>Pulse Digital · Hiring Intelligence Platform</span>
+          <span>Confidential · For Internal Use Only</span>
+        </div>
+      </body>
+      </html>
+    `);
+    win.document.close();
+
+    setTimeout(() => {
+      win.print();
+      setLoading(false);
+      setDone(true);
+      setTimeout(() => setDone(false), 2500);
+    }, 800);
+  };
+
+  return (
+    <button
+      onClick={handleExport}
+      disabled={loading}
+      style={{
+        width: "100%",
+        marginTop: "1rem",
+        background: done ? "#74C476" : loading ? "#111" : "#C8A97E",
+        border: "none",
+        color: done ? "#0D0D0D" : loading ? "#555" : "#0D0D0D",
+        padding: "1rem",
+        borderRadius: 4,
+        cursor: loading ? "not-allowed" : "pointer",
+        fontFamily: "'DM Mono', monospace",
+        fontSize: "0.82rem",
+        fontWeight: "bold",
+        textTransform: "uppercase",
+        transition: "all 0.3s",
+        animation: done ? "none" : "pulse-glow 2s infinite",
+      }}
+    >
+      {done ? "✓ PDF Ready — Check Your Print Dialog" : loading ? "⏳ Preparing PDF..." : label}
+    </button>
+  );
+}
+
+function buildPrintContent(data, type) {
+  if (type === "Candidate Evaluation" && data) {
+    const allSkills = data.allSkills || [];
+    const strengths = allSkills.filter(s => s.score >= 4).map(s => s.short).join(", ") || "None";
+    const weaknesses = allSkills.filter(s => s.score <= 2).map(s => s.short).join(", ") || "None";
+    return `
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-val">${data.score?.toFixed(2)}</div><div class="kpi-label">Weighted Score</div></div>
+        <div class="kpi"><div class="kpi-val">${data.grade || "—"}</div><div class="kpi-label">Grade</div></div>
+        <div class="kpi"><div class="kpi-val">${data.breakEven || "—"}mo</div><div class="kpi-label">Break-Even</div></div>
+      </div>
+      <div class="decision-box">
+        <div style="font-size:0.7rem;text-transform:uppercase;color:#888;margin-bottom:8px;">Candidate</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;">${data.name || "Anonymous"}</div>
+        <div class="decision-score">${data.score?.toFixed(2)}</div>
+        <div class="tag">${data.label || "—"}</div>
+      </div>
+      <div class="section">
+        <div class="section-title">Competency Breakdown</div>
+        ${(data.competencies || []).map(c => `
+          <div class="row">
+            <span>${c.icon} ${c.short} ${c.critical ? "★" : ""}</span>
+            <span style="font-weight:700;">${c.score || 0}/5</span>
+          </div>
+          <div class="bar-wrap"><div class="bar-fill" style="width:${((c.score||0)/5)*100}%"></div></div>
+        `).join("")}
+      </div>
+      <div class="section">
+        <div class="section-title">Strengths & Improvements</div>
+        <div class="row"><span>💪 Core Strengths</span><span>${strengths}</span></div>
+        <div class="row"><span>⚠️ Areas to Improve</span><span>${weaknesses}</span></div>
+        <div class="row"><span>💰 Expected Salary</span><span>${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(data.salary || 0)}/mo</span></div>
+        <div class="row"><span>📈 Est. Retention</span><span>${data.retention || "—"}%</span></div>
+      </div>
+    `;
+  }
+
+  if (type === "Pipeline Intelligence" && data) {
+    return `
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-val">${data.total || 0}</div><div class="kpi-label">Total Evaluated</div></div>
+        <div class="kpi"><div class="kpi-val">${data.avgScore || 0}</div><div class="kpi-label">Avg Score</div></div>
+        <div class="kpi"><div class="kpi-val">${data.hireRate || 0}%</div><div class="kpi-label">Strong Hire Rate</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Pipeline Health</div>
+        <div class="row"><span>✅ Strong Hires</span><span style="font-weight:700;color:#2D7D32">${data.strongHires || 0}</span></div>
+        <div class="row"><span>⚖️ Under Review</span><span style="font-weight:700;">${data.maybeHires || 0}</span></div>
+        <div class="row"><span>❌ Rejected</span><span style="font-weight:700;color:#C62828">${data.noHires || 0}</span></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Insight</div>
+        <p style="font-size:0.82rem;line-height:1.7;color:#444;">
+          ${data.avgScore >= 4.0 ? "✅ Excellent talent pool. Average score " + data.avgScore + "/5.00 indicates high-quality sourcing." :
+            data.avgScore >= 3.0 ? "⚖️ Average pool quality. Score " + data.avgScore + "/5.00. Consider raising sourcing bar." :
+            "⚠️ Weak talent pool. Average " + data.avgScore + "/5.00. Pipeline needs urgent attention."}
+        </p>
+      </div>
+    `;
+  }
+
+  return `<p style="color:#888;text-align:center;padding:2rem;">No data available for this report.</p>`;
+}
+    
 // ── EMAIL DRAFT GENERATOR ──
 function EmailDraftGenerator({ candidateName, decision, decisionColor, score, salary, strengths, weaknesses }) {
   const [emailType, setEmailType] = useState("offer");
@@ -2034,7 +2578,7 @@ const viewProps = { showToast, fireConfetti, recordEval };
         ))}
       </div>
 
-      <style>{`
+<style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;700&display=swap');
         * { box-sizing: border-box; }
         body { margin: 0; background: #0D0D0D; }
@@ -2042,15 +2586,26 @@ const viewProps = { showToast, fireConfetti, recordEval };
         ::-webkit-scrollbar-track { background: #111; }
         ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 8px #C8A97E44; }
+          50% { box-shadow: 0 0 24px #C8A97E99, 0 0 48px #C8A97E33; }
+        }
+        @keyframes typing {
+          from { width: 0; }
+          to { width: 100%; }
+        }
         button:hover { opacity: 0.85; }
         input:focus, textarea:focus, select:focus { outline: 1px solid #C8A97E44; }
-@media print {
-  nav, footer, button, input[type="range"] { display: none !important; }
-  body, #root { background: #fff !important; color: #000 !important; }
-  * { font-family: Georgia, serif !important; }
-  main::before { content: "PULSE DIGITAL — HIRING INTELLIGENCE REPORT"; display: block; font-size: 0.7rem; letter-spacing: 0.2em; color: #888 !important; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
-  main { padding: 0 !important; }
-}
+
+        @media print {
+          nav, footer, .no-print, input[type="range"] { display: none !important; }
+          body, #root { background: #fff !important; color: #000 !important; }
+          * { font-family: Georgia, serif !important; color: #000 !important; border-color: #ccc !important; background: #fff !important; }
+          main { padding: 0 !important; }
+          .print-header { display: block !important; }
+        }
+
+        .print-header { display: none; }
       `}</style>
       <AnimatePresence>
   {toast && <Toast message={toast.message} color={toast.color} onDone={() => setToast(null)} />}
