@@ -1619,7 +1619,9 @@ ${sessionContext.length > 0 ? "5. 🔗 PATTERN OBSERVED: Any consistency/inconsi
 
 Max 330 words total.`
   }
-],
+]
+})
+});
       const data = await response.json();
       setCoachOutput(prev => ({ ...prev, [q.id]: data.content?.[0]?.text || "Failed to analyze." }));
     } catch (e) {
