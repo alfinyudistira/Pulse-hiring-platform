@@ -1488,61 +1488,178 @@ function QuestionBank() {
 
 // ── EXECUTIVE BI COMMAND CENTER ──
 function ExecutiveBI() {
-  const [stats] = useState(() => JSON.parse(localStorage.getItem("pulse_stats") || '{"scores":[]}'));
-  const [candidates] = useState(() => {
-    // Mengambil data detail kandidat dari localStorage jika ada, atau simulasi data
-    return JSON.parse(localStorage.getItem("pulse_candidates") || "[]");
+  const [stats] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("pulse_stats") || '{"total":0,"strongHires":0,"avgScore":0,"scores":[]}'); }
+    catch { return {total:0, strongHires:0, avgScore:0, scores:[]}; }
   });
 
   const total = stats.scores.length;
   const avgScore = total > 0 ? (stats.scores.reduce((a, b) => a + b, 0) / total).toFixed(2) : 0;
-  
-  // Data untuk Pie Chart: Rasio Keputusan
-  const pieData = [
-    { name: 'Strong Hire', value: stats.scores.filter(s => s >= 4.0).length, color: "#74C476" },
-    { name: 'Maybe/Hire', value: stats.scores.filter(s => s >= 3.0 && s < 4.0).length, color: "#C8A97E" },
-    { name: 'No Hire', value: stats.scores.filter(s => s < 3.0).length, color: "#E8835A" },
+  const strongHires = stats.scores.filter(s => s >= 4.0).length;
+  const maybeHires = stats.scores.filter(s => s >= 3.0 && s < 4.0).length;
+  const noHires = stats.scores.filter(s => s < 3.0).length;
+  const hireRate = total > 0 ? Math.round((strongHires / total) * 100) : 0;
+
+  const decisionData = [
+    { name: 'Strong Hire', value: strongHires, color: "#74C476" },
+    { name: 'Maybe/Hire', value: maybeHires, color: "#C8A97E" },
+    { name: 'No Hire', value: noHires, color: "#E8835A" },
   ].filter(d => d.value > 0);
 
+  // Score distribution 0-5
+  const buckets = [0,1,2,3,4,5].map(n => ({
+    range: `${n}.0`,
+    count: stats.scores.filter(s => Math.floor(s) === n).length
+  }));
+
+  // Animated counter hook
+  function AnimatedNumber({ value, decimals = 0, color = "#C8A97E" }) {
+    const [display, setDisplay] = useState(0);
+    useEffect(() => {
+      let start = 0;
+      const end = parseFloat(value);
+      if (start === end) return;
+      const duration = 1200;
+      const step = (end - start) / (duration / 16);
+      const timer = setInterval(() => {
+        start += step;
+        if (start >= end) { setDisplay(end); clearInterval(timer); }
+        else setDisplay(start);
+      }, 16);
+      return () => clearInterval(timer);
+    }, [value]);
+    return <span style={{ color, fontFamily: "'Playfair Display', serif", fontSize: "3.5rem", fontWeight: 700 }}>
+      {decimals > 0 ? display.toFixed(decimals) : Math.floor(display)}
+    </span>;
+  }
+
+  const EmptyState = () => (
+    <div style={{ textAlign: "center", padding: "4rem 2rem" }}>
+      <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📊</div>
+      <div style={{ color: "#444", fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", marginBottom: "0.5rem" }}>No Data Yet</div>
+      <div style={{ color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", maxWidth: 300, margin: "0 auto 1.5rem", lineHeight: 1.6 }}>
+        Evaluate candidates in the Fit Calculator tab to populate this dashboard.
+      </div>
+      <div style={{ display: "inline-block", background: "#111", border: "1px dashed #333", borderRadius: 6, padding: "0.75rem 1.5rem", color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>
+        ⚡ Go to Fit Calculator → evaluate candidates → come back here
+      </div>
+    </div>
+  );
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ maxWidth: 1100, margin: "0 auto" }}>
+      {/* Header */}
       <div style={{ marginBottom: "2rem" }}>
-        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Module 08 — Business Intelligence</p>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "2.5rem", color: "#F0EAE0", margin: "0.5rem 0" }}>Executive Command Center</h2>
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 08 — Business Intelligence</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 0.5rem" }}>Executive Command Center</h2>
+        <p style={{ color: "#888", fontSize: "0.85rem" }}>Real-time analytics from your hiring pipeline. Data updates every time you save a candidate evaluation.</p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
-        {/* KPI Cards */}
-        <div style={{ background: "#111", padding: "1.5rem", borderRadius: 8, border: "1px solid #1E1E1E", textAlign: "center" }}>
-          <div style={{ color: "#666", fontSize: "0.7rem", textTransform: "uppercase" }}>Avg. Technical Merit</div>
-          <div style={{ color: "#C8A97E", fontSize: "3rem", fontWeight: "bold", fontFamily: "'Playfair Display', serif" }}>{avgScore}</div>
-        </div>
-        <div style={{ background: "#111", padding: "1.5rem", borderRadius: 8, border: "1px solid #1E1E1E", textAlign: "center" }}>
-          <div style={{ color: "#666", fontSize: "0.7rem", textTransform: "uppercase" }}>Total Candidates Processed</div>
-          <div style={{ color: "#F0EAE0", fontSize: "3rem", fontWeight: "bold", fontFamily: "'Playfair Display', serif" }}>{total}</div>
-        </div>
-      </div>
+      {total === 0 ? <EmptyState /> : (
+        <>
+          {/* ROW 1: 4 KPI Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+            {[
+              { label: "Total Evaluated", val: total, decimals: 0, color: "#F0EAE0", sub: "candidates processed" },
+              { label: "Avg. Merit Score", val: avgScore, decimals: 2, color: "#C8A97E", sub: "weighted average / 5.00" },
+              { label: "Strong Hire Rate", val: hireRate, decimals: 0, color: "#74C476", sub: "% scoring 4.0+", suffix: "%" },
+              { label: "No Hire Rate", val: total > 0 ? Math.round((noHires/total)*100) : 0, decimals: 0, color: "#E8835A", sub: "% below threshold", suffix: "%" },
+            ].map(kpi => (
+              <motion.div key={kpi.label} whileHover={{ scale: 1.02 }} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: kpi.color, opacity: 0.6 }} />
+                <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.75rem" }}>{kpi.label}</div>
+                <AnimatedNumber value={kpi.val} decimals={kpi.decimals} color={kpi.color} />
+                {kpi.suffix && <span style={{ color: kpi.color, fontFamily: "'Playfair Display', serif", fontSize: "2rem" }}>{kpi.suffix}</span>}
+                <div style={{ color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", marginTop: "0.5rem" }}>{kpi.sub}</div>
+              </motion.div>
+            ))}
+          </div>
 
-      <div style={{ background: "#0A0A0A", padding: "2rem", borderRadius: 8, border: "1px solid #1E1E1E" }}>
-        <h3 style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", marginBottom: "2rem", textTransform: "uppercase" }}>[ Hiring Quality Distribution ]</h3>
-        {total > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={pieData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-              <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 12 }} />
-              <YAxis tick={{ fill: '#888' }} />
-              <Tooltip contentStyle={{ backgroundColor: '#111', border: '1px solid #333' }} />
-              <Bar dataKey="value" radius={[5, 5, 0, 0]}>
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div style={{ color: "#444", textAlign: "center", padding: "3rem" }}>Awaiting data for intelligence mapping...</div>
-        )}
-      </div>
+          {/* ROW 2: Decision Breakdown + Score Distribution */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1.5rem", marginBottom: "1.5rem" }}>
+            
+            {/* Decision Breakdown */}
+            <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+              <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+                [ HIRING QUALITY DISTRIBUTION ]
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={decisionData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill: '#888', fontSize: 11, fontFamily: "'DM Mono', monospace" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#444', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0D0D0D', border: '1px solid #333', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontSize: '0.75rem' }} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {decisionData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Score Distribution */}
+            <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+              <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+                [ SCORE DISTRIBUTION HISTOGRAM ]
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={buckets} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
+                  <XAxis dataKey="range" tick={{ fill: '#888', fontSize: 11, fontFamily: "'DM Mono', monospace" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#444', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#0D0D0D', border: '1px solid #333', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontSize: '0.75rem' }} />
+                  <Bar dataKey="count" name="Candidates" fill="#6BAED6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* ROW 3: Hiring Funnel Visual */}
+          <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem", marginBottom: "1.5rem" }}>
+            <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+              [ PIPELINE HEALTH SUMMARY ]
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "1rem" }}>
+              {[
+                { label: "Evaluated", count: total, color: "#6BAED6", pct: 100 },
+                { label: "Strong Hire", count: strongHires, color: "#74C476", pct: total > 0 ? Math.round((strongHires/total)*100) : 0 },
+                { label: "Under Review", count: maybeHires, color: "#C8A97E", pct: total > 0 ? Math.round((maybeHires/total)*100) : 0 },
+                { label: "Rejected", count: noHires, color: "#E8835A", pct: total > 0 ? Math.round((noHires/total)*100) : 0 },
+              ].map(stage => (
+                <div key={stage.label} style={{ textAlign: "center", background: "#111", borderRadius: 6, padding: "1.25rem", border: `1px solid ${stage.color}22` }}>
+                  <div style={{ color: stage.color, fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>{stage.count}</div>
+                  <div style={{ color: "#DDD", fontSize: "0.8rem", margin: "0.25rem 0" }}>{stage.label}</div>
+                  <div style={{ height: 4, background: "#1A1A1A", borderRadius: 2, overflow: "hidden", marginTop: "0.75rem" }}>
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${stage.pct}%` }} transition={{ duration: 1, delay: 0.3 }} style={{ height: "100%", background: stage.color, borderRadius: 2 }} />
+                  </div>
+                  <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", marginTop: "0.4rem" }}>{stage.pct}% of total</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ROW 4: Insight Report */}
+          <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem" }}>
+            <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+              [ AUTO-GENERATED PIPELINE INSIGHT ]
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", fontSize: "0.85rem", color: "#AAA", lineHeight: 1.7 }}>
+              {avgScore >= 4.0 && <div>✅ <strong style={{color:"#74C476"}}>Excellent Talent Pool:</strong> Average score {avgScore}/5.00 indicates a high-quality applicant pipeline. Your sourcing strategy is working.</div>}
+              {avgScore >= 3.0 && avgScore < 4.0 && <div>⚖️ <strong style={{color:"#C8A97E"}}>Average Pool Quality:</strong> Score of {avgScore}/5.00. Consider raising your sourcing bar — target LinkedIn Premium, referrals, or niche job boards.</div>}
+              {avgScore < 3.0 && avgScore > 0 && <div>⚠️ <strong style={{color:"#E8835A"}}>Weak Talent Pool:</strong> Average {avgScore}/5.00. The pipeline needs urgent attention — revisit job description requirements and sourcing channels.</div>}
+              {hireRate < 20 && total >= 3 && <div>📉 <strong style={{color:"#E8C35A"}}>Low Conversion Rate ({hireRate}%):</strong> Less than 1 in 5 candidates meet the bar. Either sourcing quality is low, or the scoring rubric may be too strict.</div>}
+              {hireRate >= 50 && <div>🏆 <strong style={{color:"#74C476"}}>High Conversion ({hireRate}%):</strong> Over half your candidates are Strong Hires. This is exceptional — validate that scoring isn't too lenient.</div>}
+              {total >= 5 && <div>📊 <strong style={{color:"#6BAED6"}}>Sample Size:</strong> {total} evaluations completed. Data reliability is {total >= 10 ? "HIGH" : "MODERATE"}. {total < 10 ? `Add ${10 - total} more to reach high-confidence threshold.` : "Statistical patterns are now meaningful."}</div>}
+            </div>
+            <button onClick={() => window.print()} style={{ width: "100%", marginTop: "1.5rem", background: "#1A1A1A", border: "1px solid #C8A97E", color: "#C8A97E", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase", transition: "all 0.3s" }}
+              onMouseOver={e => { e.target.style.background = "#C8A97E"; e.target.style.color = "#000"; }}
+              onMouseOut={e => { e.target.style.background = "#1A1A1A"; e.target.style.color = "#C8A97E"; }}>
+              📄 Export Executive BI Report
+            </button>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 }
