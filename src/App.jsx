@@ -470,8 +470,8 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
         <div style={{ marginTop: "1rem", color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textAlign: "center" }}>
           Validity coefficient = correlation between selection method and actual job performance (0 = none, 1 = perfect)
         </div>
-      </div
-        
+      </div>
+
 </motion.div>
 );
 }
