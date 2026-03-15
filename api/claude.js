@@ -4,11 +4,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Mengambil prompt dari format messages Claude
     const userPrompt = req.body.messages[0].content;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Hit ke endpoint Google Gemini 1.5 Flash (Gratis & Cepat)
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
@@ -22,19 +20,21 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // Mapping response Gemini agar sesuai dengan format yang dibaca App.jsx kamu
-    // App.jsx kamu membaca: data.content[0].text
+    // Jika Google kirim error, kita tampilkan pesannya di UI App kamu
+    if (!response.ok) {
+      return res.status(200).json({ 
+        content: [{ text: `Google API Error: ${data.error?.message || 'Terjadi kesalahan pada API'}` }] 
+      });
+    }
+
+    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
     const formattedResponse = {
-      content: [
-        {
-          text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Gagal mendapatkan respon dari AI."
-        }
-      ]
+      content: [{ text: aiText || "Respon kosong dari Gemini." }]
     };
 
     res.status(200).json(formattedResponse);
   } catch (error) {
-    console.error('Gemini Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(200).json({ content: [{ text: `Server Error: ${error.message}` }] });
   }
 }
