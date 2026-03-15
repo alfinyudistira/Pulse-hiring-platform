@@ -1583,6 +1583,7 @@ function QuestionBank() {
 
 const [coachLoading, setCoachLoading] = useState({});
   const [coachOutput, setCoachOutput] = useState({});
+  const [sessionContext, setSessionContext] = useState([]);
 
   const runCoach = async (q) => {
     const note = notes[q.id] || "";
@@ -1599,29 +1600,32 @@ const [coachLoading, setCoachLoading] = useState({});
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
-          messages: [{
-            role: "user",
-            content: `You are a senior HR consultant evaluating a job candidate for a Digital Marketing role at Pulse Digital.
+          messages: [
+  {
+    role: "user",
+    content: `You are a senior HR consultant evaluating the SAME candidate across multiple interview questions for a Digital Marketing role at Pulse Digital.
 
-Interview question: "${q.text}"
+${sessionContext.length > 0 ? `PREVIOUS ANSWERS FROM THIS CANDIDATE:\n${sessionContext.map(s => `Q: "${s.q}"\nA: "${s.a}"`).join("\n\n")}\n\n` : ""}
+CURRENT QUESTION: "${q.text}"
 Evaluation focus: ${q.intent}
-Candidate's answer (from interviewer notes): "${note}"
+Candidate's answer: "${note}"
 
 Provide:
-1. 🟢 GREEN FLAGS (max 2 bullet points of strong signals)
-2. 🔴 RED FLAGS (max 2 bullet points of weak signals, or "None detected")
-3. 💡 SUGGESTED FOLLOW-UP QUESTION (1 question to probe deeper)
-4. ⭐ SCORE SUGGESTION: X/5 with one sentence reason
+1. 🟢 GREEN FLAGS (max 2 bullet points)
+2. 🔴 RED FLAGS (max 2 bullet points, or "None detected")
+3. 💡 SUGGESTED FOLLOW-UP QUESTION
+4. ⭐ SCORE SUGGESTION: X/5 with reason
+${sessionContext.length > 0 ? "5. 🔗 PATTERN OBSERVED: Any consistency/inconsistency vs previous answers?" : ""}
 
-Be concise, specific, and actionable. Max 200 words total.`
-          }]
-        })
-      });
+Max 330 words total.`
+  }
+],
       const data = await response.json();
       setCoachOutput(prev => ({ ...prev, [q.id]: data.content?.[0]?.text || "Failed to analyze." }));
     } catch (e) {
       setCoachOutput(prev => ({ ...prev, [q.id]: "Error. Please try again." }));
     }
+      setSessionContext(prev => [...prev.slice(-4), { q: q.text.substring(0, 60), a: note.substring(0, 100) }]);
     setCoachLoading(prev => ({ ...prev, [q.id]: false }));
   };
   
@@ -1720,6 +1724,18 @@ Be concise, specific, and actionable. Max 200 words total.`
         ))}
       </div>
 
+{sessionContext.length > 0 && (
+  <div style={{ background: "#0A1020", border: "1px solid #6BAED644", borderRadius: 8, padding: "1.25rem", marginBottom: "1rem" }}>
+    <div style={{ color: "#6BAED6", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between" }}>
+      <span>[ SESSION MEMORY — {sessionContext.length} answers tracked ]</span>
+      <button onClick={() => setSessionContext([])} style={{ background: "transparent", border: "none", color: "#E8835A", cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>✕ Clear</button>
+    </div>
+    <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", lineHeight: 1.6 }}>
+      AI Coach sekarang punya konteks {sessionContext.length} jawaban kandidat ini. Pattern analysis aktif.
+    </div>
+  </div>
+)}
+        
       <button onClick={() => window.print()} style={{ width: "100%", marginTop: "2rem", background: "#1A1A1A", border: "1px solid #2A2A2A", color: "#888", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
         📄 Print / Export Question Bank with Notes
       </button>
@@ -2598,6 +2614,12 @@ const viewProps = { showToast, fireConfetti, recordEval };
           to { width: 100%; }
         }
         button:hover { opacity: 0.85; }
+        @media (max-width: 600px) {
+          main { padding: 1.25rem 1rem !important; }
+          nav { padding: 0 0.5rem !important; }
+          nav button { padding: 0.85rem 0.75rem !important; font-size: 0.62rem !important; }
+          h2 { font-size: 1.6rem !important; }
+        }
         input:focus, textarea:focus, select:focus { outline: 1px solid #C8A97E44; }
 
         @media print {
