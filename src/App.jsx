@@ -213,6 +213,15 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
     }
   }
 
+  // Logika Predictive ROI & Retention
+  let breakEven = 0;
+  let retention = 0;
+  if (allFilled) {
+     breakEven = decision.score >= 4.0 ? 3 : decision.score >= 3.0 ? 6 : 12; 
+     const cultureBonus = softScores.culture ? (softScores.culture / 5) * 20 : 10;
+     retention = Math.min(Math.round((decision.score / 5) * 75 + cultureBonus), 98); 
+  }
+  
   // Fungsi Pembuat Report Otomatis
   const getReport = () => {
     if (!allFilled) return <div style={{ color: "#555", fontSize: "0.8rem", marginTop: "1rem" }}>Fill all competencies to generate AI report...</div>;
@@ -356,6 +365,20 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
             {/* Munculin Report Disini */}
             {getReport()}
 
+                        {/* Predictive ROI Engine UI */}
+            {allFilled && (
+              <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.2rem", marginTop: "1rem", textAlign: "left", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div style={{ borderRight: "1px solid #222" }}>
+                  <div style={{ color: "#888", fontSize: "0.65rem", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: "0.2rem" }}>Est. Break-Even</div>
+                  <div style={{ color: "#C8A97E", fontSize: "1.5rem", fontWeight: "bold", fontFamily: "'Playfair Display', serif" }}>{breakEven} <span style={{ fontSize: "0.8rem", fontFamily: "'DM Mono', monospace", fontWeight: "normal", color: "#666" }}>Months</span></div>
+                </div>
+                <div style={{ paddingLeft: "0.5rem" }}>
+                  <div style={{ color: "#888", fontSize: "0.65rem", textTransform: "uppercase", fontFamily: "'DM Mono', monospace", marginBottom: "0.2rem" }}>1-Year Retention</div>
+                  <div style={{ color: "#74C476", fontSize: "1.5rem", fontWeight: "bold", fontFamily: "'Playfair Display', serif" }}>{retention}<span style={{ fontSize: "1rem", fontWeight: "normal", color: "#666" }}>%</span></div>
+                </div>
+              </div>
+            )}
+
             {/* Tombol Print / Download PDF */}
             <button onClick={() => window.print()} 
               style={{ width: "100%", marginTop: "1.5rem", background: "#C8A97E", border: "none", color: "#0D0D0D", padding: "0.8rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
@@ -443,6 +466,14 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
           </tbody>
         </table>
       </div>
+            <button 
+        onClick={downloadCSV} 
+        style={{ marginTop: "1.5rem", width: "100%", background: "transparent", border: "1px solid #6BAED6", color: "#6BAED6", padding: "0.8rem 1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", transition: "all 0.3s" }}
+        onMouseOver={(e) => { e.target.style.background = "#6BAED6"; e.target.style.color = "#000"; }}
+        onMouseOut={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#6BAED6"; }}
+      >
+        📥 Download Data as CSV (Excel)
+      </button>
     </div>
   )}
 
