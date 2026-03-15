@@ -17,13 +17,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Coba Flash dulu
-    let response = await callGemini("gemini-1.5-flash");
+    // Ubah ke model versi terbaru yang aktif saat ini
+    let response = await callGemini("gemini-2.5-flash");
     let data = await response.json();
 
-    // Kalau Flash gagal (Not Found), coba Pro
+    // Kalau Flash gagal, fallback ke versi Pro terbaru
     if (!response.ok && data.error?.message?.includes("not found")) {
-      response = await callGemini("gemini-1.5-pro");
+      response = await callGemini("gemini-2.5-pro");
       data = await response.json();
     }
 
