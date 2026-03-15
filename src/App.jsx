@@ -981,7 +981,7 @@ function Scorecard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           messages: [{
             role: "user",
@@ -1597,7 +1597,7 @@ const [coachLoading, setCoachLoading] = useState({});
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           messages: [{
             role: "user",
@@ -1714,7 +1714,11 @@ Be concise, specific, and actionable. Max 200 words total.`
                   </pre>
                 </motion.div>
               )}
-            </div>
+</div>
+          </motion.div>
+        ))}
+      </div>
+
       <button onClick={() => window.print()} style={{ width: "100%", marginTop: "2rem", background: "#1A1A1A", border: "1px solid #2A2A2A", color: "#888", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
         📄 Print / Export Question Bank with Notes
       </button>
@@ -2355,7 +2359,7 @@ function EmailDraftGenerator({ candidateName, decision, decisionColor, score, sa
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 1000,
           messages: [{ role: "user", content: prompts[emailType] }]
         })
@@ -2514,12 +2518,10 @@ export default function App() {
   };
 
   const resetStats = () => {
-    if (window.confirm("Are you sure you want to reset all evaluation data history?")) {
-      const initialStats = {total:0, strongHires:0, avgScore:0, scores:[]};
-      localStorage.setItem("pulse_stats", JSON.stringify(initialStats));
-      setStats(initialStats);
-      showToast?.("Data history successfully reset!", "#74C476");
-    }
+    const initialStats = {total:0, strongHires:0, avgScore:0, scores:[]};
+    localStorage.setItem("pulse_stats", JSON.stringify(initialStats));
+    setStats(initialStats);
+    showToast?.("Data history successfully reset!", "#74C476");
   };
 
   
