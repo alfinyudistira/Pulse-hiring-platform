@@ -69,7 +69,7 @@ const DI_METRICS = [
 
 // ─── TOAST & CONFETTI ────────────────────────────────────────────────────────
 function Toast({ message, color, onDone }) {
-  useEffect(() => { const t = setTimeout(onDone, 2800); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(onDone, 2800); return () => clearTimeout(t); }, [onDone]);
   return (
     <motion.div initial={{ opacity: 0, y: 40, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: 20, x: "-50%" }}
       style={{ position: "fixed", bottom: "2rem", left: "50%", background: "#1A1A1A", border: `1px solid ${color}`, borderRadius: 8, padding: "0.75rem 1.5rem", color: color, fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, zIndex: 9999, whiteSpace: "nowrap", boxShadow: `0 0 20px ${color}44` }}>
