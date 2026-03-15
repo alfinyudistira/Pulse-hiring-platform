@@ -970,68 +970,117 @@ function DIMetrics() {
 
 // ── ONBOARDING ──
 function Onboarding() {
-  const [activeWeek, setActiveWeek] = useState(0);
+  const [checked, setChecked] = useState({});
+
+  // Data 100% diambil dari onboarding_checklist.PDF
+  const tasks = [
+    { id: "w1_1", phase: "Week 1 (Days 1-5)", task: "IT Setup: Laptop, accounts, tool access", owner: "IT Team", deliverable: "GA4, Meta, LinkedIn ready", color: "#6BAED6" },
+    { id: "w1_2", phase: "Week 1 (Days 1-5)", task: "Meet manager for 1-on-1 kickoff", owner: "Manager", deliverable: "Clear 90-day objectives", color: "#C8A97E" },
+    { id: "w1_3", phase: "Week 1 (Days 1-5)", task: "Meet onboarding buddy", owner: "HR", deliverable: "Schedule weekly check-ins", color: "#9B8EC4" },
+    { id: "w1_4", phase: "Week 1 (Days 1-5)", task: "Shadow customer service (2 hours)", owner: "CS Manager", deliverable: "3+ key insights documented", color: "#C8A97E" },
+    { id: "w1_5", phase: "Week 1 (Days 1-5)", task: "Audit current social media channels", owner: "Self", deliverable: "3+ improvement recommendations", color: "#74C476" },
+
+    { id: "d30_1", phase: "Days 6-30 (Learning)", task: "Take over daily social media & draft 3 posts", owner: "Self", deliverable: "Consistent posting, manager approval", color: "#74C476" },
+    { id: "d30_2", phase: "Days 6-30 (Learning)", task: "Setup tracking for new campaign", owner: "Self", deliverable: "Pixels & GA4 goals firing correctly", color: "#74C476" },
+    { id: "d30_3", phase: "Days 6-30 (Learning)", task: "Month 1 / 30-Day performance review", owner: "Manager", deliverable: "Feedback session & alignment", color: "#C8A97E" },
+
+    { id: "d60_1", phase: "Days 31-60 (Execution)", task: "Launch & monitor independent campaign", owner: "Self", deliverable: "Campaign live, tracked daily", color: "#74C476" },
+    { id: "d60_2", phase: "Days 31-60 (Execution)", task: "A/B test email subject lines", owner: "Self", deliverable: "Implement winning variant", color: "#74C476" },
+    { id: "d60_3", phase: "Days 31-60 (Execution)", task: "Optimize underperforming ad campaign", owner: "Self", deliverable: "CPA reduced 10%+", color: "#74C476" },
+    { id: "d60_4", phase: "Days 31-60 (Execution)", task: "60-day competency assessment", owner: "Manager", deliverable: "Progress on 2-3 development areas", color: "#C8A97E" },
+
+    { id: "d90_1", phase: "Days 61-90 (Impact)", task: "Lead major campaign end-to-end", owner: "Self", deliverable: "ROI positive, learnings documented", color: "#74C476" },
+    { id: "d90_2", phase: "Days 61-90 (Impact)", task: "Identify & implement process improvement", owner: "Self", deliverable: "Team efficiency +10%", color: "#74C476" },
+    { id: "d90_3", phase: "Days 61-90 (Impact)", task: "Participate in budget planning", owner: "Manager", deliverable: "Data-driven allocation", color: "#C8A97E" },
+    { id: "d90_4", phase: "Days 61-90 (Impact)", task: "90-day comprehensive review", owner: "Manager", deliverable: "Performance score 4.0+/5.0", color: "#C8A97E" }
+  ];
+
+  const totalTasks = tasks.length;
+  const completedTasks = Object.values(checked).filter(Boolean).length;
+  const progressPercent = Math.round((completedTasks / totalTasks) * 100);
+
+  const getRiskStatus = () => {
+    if (progressPercent < 25) return { label: "⚠️ HIGH FLIGHT RISK", desc: "Critical setup phase. Employee is highly vulnerable to turnover.", color: "#E8835A" };
+    if (progressPercent < 60) return { label: "⚖️ RAMPING UP", desc: "Gaining momentum, but still requires continuous manager support.", color: "#E8C35A" };
+    if (progressPercent < 90) return { label: "📈 PRODUCTIVE", desc: "Executing independently. Approaching positive ROI for the company.", color: "#7EB5A6" };
+    return { label: "✅ FULLY AUTONOMOUS", desc: "100% Integrated. Running campaigns independently with minimal oversight.", color: "#74C476" };
+  };
+
+  const risk = getRiskStatus();
+  const phases = [...new Set(tasks.map(t => t.phase))];
+
+  const toggleCheck = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 06 — People Operations</p>
-      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 0.5rem" }}>90-Day Onboarding Blueprint</h2>
-      <p style={{ color: "#555", fontSize: "0.82rem", marginBottom: "2rem" }}>Target: 4.0+/5.0 performance at 90-day review · Week-by-week milestone tracking</p>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
+      <div style={{ marginBottom: "2rem" }}>
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 06 — Ramp-Up & Retention</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>Interactive 90-Day Onboarding Engine</h2>
+        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 750 }}>
+          Structured onboarding reduces early turnover by 82%. Use this interactive 30-60-90 day tracker to assign clear deliverables, monitor time-to-productivity, and mitigate flight risks in real-time.
+        </p>
+      </div>
 
-      {/* Timeline */}
-      <div style={{ position: "relative", marginBottom: "2rem", overflowX: "auto" }}>
-        <div style={{ display: "flex", gap: 0, minWidth: 500 }}>
-          {ONBOARDING_WEEKS.map((w, i) => (
-            <button key={w.week} onClick={() => setActiveWeek(i)} style={{
-              flex: i === 4 ? 2 : 1, background: activeWeek === i ? w.color : "#111",
-              border: `1px solid ${activeWeek === i ? w.color : "#2A2A2A"}`,
-              color: activeWeek === i ? "#0D0D0D" : "#555",
-              padding: "0.75rem 0.5rem", cursor: "pointer",
-              fontFamily: "'DM Mono', monospace", fontSize: "0.65rem",
-              fontWeight: activeWeek === i ? 700 : 400,
-              letterSpacing: "0.05em", transition: "all 0.2s",
-              borderRight: i < 4 ? "none" : "1px solid #2A2A2A"
-            }}>{w.week}</button>
-          ))}
+      {/* Real-Time Analytics Dashboard */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", marginBottom: "2.5rem" }}>
+        <div style={{ flex: "1 1 300px", background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+            <span style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase" }}>Time-to-Productivity Progress</span>
+            <span style={{ color: "#F0EAE0", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700 }}>{progressPercent}%</span>
+          </div>
+          <div style={{ width: "100%", height: 8, background: "#222", borderRadius: 4, overflow: "hidden", marginBottom: "0.5rem" }}>
+            <div style={{ width: `${progressPercent}%`, height: "100%", background: risk.color, transition: "width 0.5s ease-in-out, background 0.5s" }} />
+          </div>
+          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textAlign: "right" }}>{completedTasks} of {totalTasks} Key Deliverables Met</div>
+        </div>
+
+        <div style={{ flex: "1 1 300px", background: `${risk.color}15`, border: `1px solid ${risk.color}40`, borderRadius: 8, padding: "1.5rem", transition: "all 0.5s" }}>
+          <div style={{ color: risk.color, fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.05em", fontWeight: 700, marginBottom: "0.5rem" }}>
+            {risk.label}
+          </div>
+          <div style={{ color: "#AAA", fontSize: "0.85rem", lineHeight: 1.5 }}>
+            {risk.desc}
+          </div>
         </div>
       </div>
 
-      <div style={{ background: "#111", border: `2px solid ${ONBOARDING_WEEKS[activeWeek].color}`, borderRadius: 8, padding: "2rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
-          <div>
-            <div style={{ color: ONBOARDING_WEEKS[activeWeek].color, fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>{ONBOARDING_WEEKS[activeWeek].week}</div>
-            <div style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.4rem", fontWeight: 700, marginTop: "0.25rem" }}>{ONBOARDING_WEEKS[activeWeek].theme}</div>
-          </div>
-          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>
-            {ONBOARDING_WEEKS[activeWeek].items.length} milestones
-          </div>
-        </div>
-        <div style={{ display: "grid", gap: "0.6rem" }}>
-          {ONBOARDING_WEEKS[activeWeek].items.map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "0.75rem" }}>
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: ONBOARDING_WEEKS[activeWeek].color, marginTop: "0.45rem", flexShrink: 0 }} />
-              <span style={{ color: "#CCC", fontSize: "0.87rem", lineHeight: 1.5 }}>{item}</span>
+      {/* Interactive Checklist Columns */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }}>
+        {phases.map(phase => (
+          <div key={phase} style={{ background: "#0A0A0A", border: "1px solid #1A1A1A", borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ background: "#111", borderBottom: "1px solid #1E1E1E", padding: "1rem 1.25rem", color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {phase}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginTop: "1.5rem" }}>
-        {[
-          { day: "30-Day", goal: "Baseline competency assessment", metric: "Team integration complete", color: "#C8A97E" },
-          { day: "60-Day", goal: "Priority development check", metric: "Own one major campaign", color: "#7EB5A6" },
-          { day: "90-Day", goal: "Comprehensive performance review", metric: "Target: 4.0+ / 5.0", color: "#74C476" },
-        ].map(g => (
-          <div key={g.day} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1.25rem", borderTop: `2px solid ${g.color}` }}>
-            <div style={{ color: g.color, fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", fontWeight: 700, marginBottom: "0.5rem" }}>{g.day} Gate</div>
-            <div style={{ color: "#DDD", fontSize: "0.83rem", marginBottom: "0.5rem" }}>{g.goal}</div>
-            <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>{g.metric}</div>
+            <div style={{ padding: "1rem" }}>
+              {tasks.filter(t => t.phase === phase).map(t => (
+                <div key={t.id} onClick={() => toggleCheck(t.id)} style={{ display: "flex", gap: "1rem", marginBottom: "1.25rem", cursor: "pointer", opacity: checked[t.id] ? 0.5 : 1, transition: "opacity 0.2s" }}>
+                  <div style={{ marginTop: "0.2rem" }}>
+                    <div style={{ width: 18, height: 18, borderRadius: 3, border: `1px solid ${checked[t.id] ? risk.color : "#444"}`, background: checked[t.id] ? risk.color : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {checked[t.id] && <span style={{ color: "#0D0D0D", fontSize: "0.7rem", fontWeight: "bold" }}>✓</span>}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ color: checked[t.id] ? "#888" : "#E0E0E0", fontSize: "0.85rem", fontWeight: 500, marginBottom: "0.3rem", textDecoration: checked[t.id] ? "line-through" : "none" }}>{t.task}</div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                      <span style={{ background: `${t.color}20`, color: t.color, border: `1px solid ${t.color}40`, padding: "0.15rem 0.4rem", borderRadius: 3, fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase" }}>{t.owner}</span>
+                      <span style={{ color: "#666", fontSize: "0.75rem" }}>↪ {t.deliverable}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
-    </div>
+
+      <button onClick={() => window.print()} style={{ width: "100%", background: "#1A1A1A", border: "1px solid #333", color: "#888", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: "bold", textTransform: "uppercase", transition: "all 0.3s" }} onMouseOver={(e) => { e.target.style.background = "#2A2A2A"; e.target.style.color = "#FFF"; }} onMouseOut={(e) => { e.target.style.background = "#1A1A1A"; e.target.style.color = "#888"; }}>
+        📄 Export 90-Day Ramp-Up Plan to PDF
+      </button>
+
+    </motion.div>
   );
 }
+
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 function Hero({ onStart }) {
