@@ -7,9 +7,9 @@ export default async function handler(req, res) {
     const userPrompt = req.body.messages[0].content;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // Perubahan: Menggunakan v1 dan gemini-1.5-flash-latest
+    // Pakai v1beta — ini biasanya yang paling "nyambung" sama model 1.5 Flash
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -21,16 +21,18 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
+    // Jika Google masih menolak, kita kirim pesan error aslinya agar jelas
     if (!response.ok) {
       return res.status(200).json({ 
-        content: [{ text: `Google API Error: ${data.error?.message || 'Check your API Key settings'}` }] 
+        content: [{ text: `Google API Error: ${data.error?.message || 'Check project settings'}` }] 
       });
     }
 
     const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
+    // Bungkus kembali ke format yang diharapkan App.jsx kamu
     const formattedResponse = {
-      content: [{ text: aiText || "Respon kosong dari Gemini." }]
+      content: [{ text: aiText || "Respon AI kosong." }]
     };
 
     res.status(200).json(formattedResponse);
