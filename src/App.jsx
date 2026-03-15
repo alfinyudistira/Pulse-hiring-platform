@@ -67,6 +67,36 @@ const DI_METRICS = [
   { label: "Blind Screening Adoption", current: 100, target: 100, status: "exceeded" },
 ];
 
+// ─── TOAST & CONFETTI ────────────────────────────────────────────────────────
+function Toast({ message, color, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 2800); return () => clearTimeout(t); }, []);
+  return (
+    <motion.div initial={{ opacity: 0, y: 40, x: "-50%" }} animate={{ opacity: 1, y: 0, x: "-50%" }} exit={{ opacity: 0, y: 20, x: "-50%" }}
+      style={{ position: "fixed", bottom: "2rem", left: "50%", background: "#1A1A1A", border: `1px solid ${color}`, borderRadius: 8, padding: "0.75rem 1.5rem", color: color, fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: 700, zIndex: 9999, whiteSpace: "nowrap", boxShadow: `0 0 20px ${color}44` }}>
+      {message}
+    </motion.div>
+  );
+}
+
+function Confetti() {
+  const pieces = Array.from({length: 30}, (_, i) => ({
+    id: i, x: Math.random() * 100, delay: Math.random() * 0.5,
+    color: ["#C8A97E","#74C476","#6BAED6","#9B8EC4","#E8835A"][Math.floor(Math.random()*5)]
+  }));
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 9998 }}>
+      {pieces.map(p => (
+        <motion.div key={p.id}
+          initial={{ y: -20, x: `${p.x}vw`, opacity: 1, rotate: 0 }}
+          animate={{ y: "110vh", opacity: 0, rotate: 720 }}
+          transition={{ duration: 2.5, delay: p.delay, ease: "easeIn" }}
+          style={{ position: "absolute", width: 8, height: 8, borderRadius: 2, background: p.color }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ─── UTILS ───────────────────────────────────────────────────────────────────
 function getDecision(scores, weights) {
   const criticals = COMPETENCIES.filter(c => c.critical);
@@ -110,7 +140,7 @@ function NavBar({ active, setActive }) {
 }
 
 // ── CALCULATOR ──
-function Calculator() {
+function Calculator({ showToast, fireConfetti, recordEval }) {
   const [candidateName, setCandidateName] = useState("");
   const [expectedSalary, setExpectedSalary] = useState(8000000);
   const [scores, setScores] = useState({});
@@ -289,6 +319,10 @@ function Calculator() {
             <button 
               onClick={() => {
     if (!allFilled) return;
+                recordEval?.(decision.score, finalDecisionLabel);
+    if (decision.score >= 4.0) { fireConfetti?.(); showToast?.("🏆 STRONG HIRE saved to shortlist!", "#74C476"); }
+    else if (decision.score >= 3.5) { showToast?.("✓ Candidate saved to comparison pool", "#C8A97E"); }
+    else { showToast?.("⚠️ Candidate saved — review recommended", "#E8C35A"); }
     setSavedCandidates(prev => [...prev, {
       name: candidateName || "Anonymous",
       salary: expectedSalary,
@@ -1324,7 +1358,7 @@ function QuestionBank() {
 }
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
-function Hero({ onStart }) {
+function Hero({ onStart, stats }) {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center",
@@ -1366,6 +1400,20 @@ function Hero({ onStart }) {
           fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
           cursor: "pointer", boxShadow: "0 0 30px #C8A97E33"
         }}>Enter Platform →</motion.button>
+        {stats.total > 0 && (
+  <div style={{ display: "flex", gap: "2rem", justifyContent: "center", marginTop: "2rem", flexWrap: "wrap" }}>
+    {[
+      { label: "Total Evaluated", val: stats.total },
+      { label: "Strong Hires", val: stats.strongHires },
+      { label: "Avg Score", val: stats.avgScore.toFixed(2) },
+    ].map(s => (
+      <div key={s.label} style={{ textAlign: "center" }}>
+        <div style={{ color: "#C8A97E", fontFamily: "'Playfair Display', serif", fontSize: "1.8rem", fontWeight: 700 }}>{s.val}</div>
+        <div style={{ color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase" }}>{s.label}</div>
+      </div>
+    ))}
+  </div>
+)}
         <div style={{ marginTop: "1rem", color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>
           by Alfin Yudistira · Pulse Digital · 2025
         </div>
@@ -1378,12 +1426,30 @@ function Hero({ onStart }) {
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [showApp, setShowApp] = useState(false);
-  const [activeTab, setActiveTab] = useState("calculator");
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem("pulse_tab") || "calculator");
+  const [toast, setToast] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [stats, setStats] = useState(() => JSON.parse(localStorage.getItem("pulse_stats") || '{"total":0,"strongHires":0,"avgScore":0,"scores":[]}'));
+
+  const showToast = (message, color = "#C8A97E") => setToast({ message, color });
+  const fireConfetti = () => { setShowConfetti(true); setTimeout(() => setShowConfetti(false), 3000); };
+
+  const recordEval = (score, label) => {
+    setStats(prev => {
+      const newScores = [...prev.scores, score];
+      const updated = { total: prev.total + 1, strongHires: prev.strongHires + (score >= 4 ? 1 : 0), avgScore: (newScores.reduce((a,b) => a+b, 0) / newScores.length), scores: newScores };
+      localStorage.setItem("pulse_stats", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  useEffect(() => { localStorage.setItem("pulse_tab", activeTab); }, [activeTab]);
 
   const views = { calculator: Calculator, funnel: FunnelChart, salary: SalaryBench, scorecard: Scorecard, di: DIMetrics, onboarding: Onboarding, questions: QuestionBank };
-  const ActiveView = views[activeTab];
+const ActiveView = views[activeTab];
+const viewProps = { showToast, fireConfetti, recordEval };
 
-  if (!showApp) return <Hero onStart={() => setShowApp(true)} />;
+  if (!showApp) return <Hero onStart={() => setShowApp(true)} stats={stats} />;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0D0D0D", display: "flex", flexDirection: "column" }}>
@@ -1399,8 +1465,8 @@ export default function App() {
       <NavBar active={activeTab} setActive={setActiveTab} />
 
       <main style={{ flex: 1, padding: "2.5rem 2rem", overflowY: "auto" }}>
-        <ActiveView />
-      </main>
+  <ActiveView {...viewProps} />
+</main>
 
       <footer style={{ borderTop: "1px solid #1A1A1A", padding: "0.75rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, flexWrap: "wrap", gap: "0.5rem" }}>
         <span style={{ color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>© 2025 Alfin Yudistira · Pulse Digital HR Technical Analysis</span>
@@ -1425,6 +1491,10 @@ export default function App() {
   main { padding: 0 !important; }
 }
       `}</style>
+      <AnimatePresence>
+  {toast && <Toast message={toast.message} color={toast.color} onDone={() => setToast(null)} />}
+</AnimatePresence>
+{showConfetti && <Confetti />}
       <Analytics />
       <SpeedInsights />
     </div>
