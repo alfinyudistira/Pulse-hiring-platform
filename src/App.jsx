@@ -89,6 +89,7 @@ function NavBar({ active, setActive }) {
     { id: "scorecard", label: "Scorecard", icon: "📋" },
     { id: "di", label: "D&I Dashboard", icon: "🌐" },
     { id: "onboarding", label: "Onboarding", icon: "🗓" },
+    { id: "questions", label: "Question Bank", icon: "💬" },
   ];
   return (
     <nav style={{ background: "#0D0D0D", borderBottom: "1px solid #2A2A2A", padding: "0 2rem", display: "flex", gap: "0.25rem", overflowX: "auto", flexShrink: 0 }}>
@@ -1206,7 +1207,121 @@ function Onboarding() {
   );
 }
 
+// ── QUESTION BANK ──
+function QuestionBank() {
+  const [activeRound, setActiveRound] = useState("all");
+  const [activeComp, setActiveComp] = useState("all");
+  const [notes, setNotes] = useState({});
 
+  const QUESTIONS = [
+    { id: 1, round: "Round 1", comp: "culture", text: "Walk me through your journey into digital marketing. What drew you to this field, and how has your focus evolved over time?", intent: "Self-awareness, career narrative clarity" },
+    { id: 2, round: "Round 1", comp: "culture", text: "Looking at our company's current social media presence, what's your first impression? What would you keep doing, and what might you try differently?", intent: "Preparation, critical thinking, diplomacy" },
+    { id: 3, round: "Round 1", comp: "culture", text: "Tell me about a time when a campaign you worked on completely flopped. What happened, and what did you take away from it?", intent: "Growth mindset, psychological safety signal" },
+    { id: 4, round: "Round 1", comp: "analytics", text: "If I asked you to set up a lead generation campaign tomorrow, what platforms would you consider and why? Walk me through your thinking process.", intent: "Strategic thinking, platform knowledge" },
+    { id: 5, round: "Round 1", comp: "email", text: "How do you typically approach audience segmentation for email campaigns? Give me a real example from your past work.", intent: "Technical depth, real-world application" },
+    { id: 6, round: "Round 2", comp: "pm", text: "Our content calendar is running two weeks behind schedule, there's a product launch happening in 10 days, and your paid ad budget just got cut by 30%. How do you prioritize?", intent: "Prioritization under pressure, resourcefulness" },
+    { id: 7, round: "Round 2", comp: "culture", text: "Describe a situation where you and a colleague had completely different ideas about how to approach a campaign. How did you work through it?", intent: "Collaborative problem-solving, ego-free communication" },
+    { id: 8, round: "Round 2", comp: "analytics", text: "What's your process for staying current with platform algorithm changes and industry trends? How do you decide what's worth paying attention to versus what's just noise?", intent: "Learning agility, information filtering" },
+    { id: 9, round: "Round 2", comp: "copy", text: "Tell me about a time you had to explain marketing metrics to someone who wasn't marketing-savvy. How did you make it meaningful to them?", intent: "Data storytelling, stakeholder communication" },
+    { id: 10, round: "Round 3", comp: "culture", text: "Where do you see digital marketing heading in the next 2-3 years, and how are you preparing yourself for those changes?", intent: "Future orientation, proactive learning" },
+    { id: 11, round: "Round 3", comp: "culture", text: "Think about the best manager you've ever had. What did they do that brought out your best work?", intent: "Management style fit, self-awareness" },
+    { id: 12, round: "Round 3", comp: "culture", text: "We're a growing company, which means things change fast and roles evolve. How do you feel about your responsibilities potentially shifting as we scale?", intent: "Adaptability, ambiguity tolerance" },
+    { id: 13, round: "Round 3", comp: "analytics", text: "If you could only focus on three metrics for the next quarter, which would you choose and why?", intent: "Strategic prioritization, business acumen" },
+    { id: 14, round: "Round 3", comp: "culture", text: "Describe your ideal work environment. What helps you do your best work, and what tends to drain your energy?", intent: "Culture fit, self-awareness, retention signal" },
+    { id: 15, round: "Round 3", comp: "culture", text: "What questions do you have for us?", intent: "Candidate engagement, critical evaluation of opportunity" },
+  ];
+
+  const rounds = ["all", "Round 1", "Round 2", "Round 3"];
+  const compFilters = [
+    { id: "all", label: "All Topics" },
+    { id: "analytics", label: "Analytics" },
+    { id: "email", label: "Email / CRM" },
+    { id: "copy", label: "Copywriting" },
+    { id: "pm", label: "Project Mgmt" },
+    { id: "culture", label: "Culture & Soft" },
+  ];
+
+  const filtered = QUESTIONS.filter(q =>
+    (activeRound === "all" || q.round === activeRound) &&
+    (activeComp === "all" || q.comp === activeComp)
+  );
+
+  const roundColors = { "Round 1": "#C8A97E", "Round 2": "#7EB5A6", "Round 3": "#9B8EC4" };
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 900, margin: "0 auto" }}>
+      <div style={{ marginBottom: "2rem" }}>
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 07 — Interview Intelligence</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 0.5rem" }}>Question Bank</h2>
+        <p style={{ color: "#888", fontSize: "0.9rem", lineHeight: 1.6, maxWidth: 700 }}>
+          All 15 structured interview questions from the Pulse Digital framework, mapped by round and competency. Add your notes directly for each question.
+        </p>
+      </div>
+
+      {/* Filter Round */}
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+        {rounds.map(r => (
+          <button key={r} onClick={() => setActiveRound(r)} style={{
+            background: activeRound === r ? "#C8A97E" : "#111",
+            border: `1px solid ${activeRound === r ? "#C8A97E" : "#2A2A2A"}`,
+            color: activeRound === r ? "#0D0D0D" : "#666",
+            padding: "0.5rem 1rem", borderRadius: 4, cursor: "pointer",
+            fontFamily: "'DM Mono', monospace", fontSize: "0.72rem",
+            fontWeight: activeRound === r ? 700 : 400, textTransform: "uppercase"
+          }}>{r === "all" ? "All Rounds" : r}</button>
+        ))}
+      </div>
+
+      {/* Filter Competency */}
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "2rem" }}>
+        {compFilters.map(c => (
+          <button key={c.id} onClick={() => setActiveComp(c.id)} style={{
+            background: activeComp === c.id ? "#1A1A1A" : "transparent",
+            border: `1px solid ${activeComp === c.id ? "#C8A97E" : "#2A2A2A"}`,
+            color: activeComp === c.id ? "#C8A97E" : "#555",
+            padding: "0.4rem 0.85rem", borderRadius: 20, cursor: "pointer",
+            fontFamily: "'DM Mono', monospace", fontSize: "0.68rem"
+          }}>{c.label}</button>
+        ))}
+      </div>
+
+      {/* Question Cards */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        {filtered.map(q => (
+          <motion.div key={q.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <span style={{ background: `${roundColors[q.round]}20`, color: roundColors[q.round], border: `1px solid ${roundColors[q.round]}40`, padding: "0.25rem 0.6rem", borderRadius: 3, fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", fontWeight: 700 }}>{q.round}</span>
+                <span style={{ color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>Q{q.id}</span>
+              </div>
+            </div>
+
+            <p style={{ color: "#F0EAE0", fontSize: "0.95rem", lineHeight: 1.6, margin: "0 0 1rem", fontWeight: 500 }}>
+              "{q.text}"
+            </p>
+
+            <div style={{ background: "#0A0A0A", borderLeft: "2px solid #333", padding: "0.6rem 0.8rem", marginBottom: "1rem" }}>
+              <span style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textTransform: "uppercase" }}>Evaluation Lens: </span>
+              <span style={{ color: "#888", fontSize: "0.78rem" }}>{q.intent}</span>
+            </div>
+
+            <textarea
+              value={notes[q.id] || ""}
+              onChange={e => setNotes(n => ({ ...n, [q.id]: e.target.value }))}
+              placeholder="Add interview notes here..."
+              style={{ background: "#0D0D0D", border: "1px solid #2A2A2A", borderRadius: 4, color: "#AAA", padding: "0.75rem", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", width: "100%", boxSizing: "border-box", resize: "vertical", minHeight: 60 }}
+            />
+          </motion.div>
+        ))}
+      </div>
+
+      <button onClick={() => window.print()} style={{ width: "100%", marginTop: "2rem", background: "#1A1A1A", border: "1px solid #2A2A2A", color: "#888", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
+        📄 Print / Export Question Bank with Notes
+      </button>
+    </motion.div>
+  );
+}
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 function Hero({ onStart }) {
@@ -1265,7 +1380,7 @@ export default function App() {
   const [showApp, setShowApp] = useState(false);
   const [activeTab, setActiveTab] = useState("calculator");
 
-  const views = { calculator: Calculator, funnel: FunnelChart, salary: SalaryBench, scorecard: Scorecard, di: DIMetrics, onboarding: Onboarding };
+  const views = { calculator: Calculator, funnel: FunnelChart, salary: SalaryBench, scorecard: Scorecard, di: DIMetrics, onboarding: Onboarding, questions: QuestionBank };
   const ActiveView = views[activeTab];
 
   if (!showApp) return <Hero onStart={() => setShowApp(true)} />;
