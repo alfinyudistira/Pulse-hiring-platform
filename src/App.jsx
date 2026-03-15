@@ -1474,7 +1474,34 @@ function Hero({ onStart, stats }) {
           cursor: "pointer", boxShadow: "0 0 30px #C8A97E33"
         }}>Enter Platform →</motion.button>
         {stats.total > 0 && (
-  <div style={{ display: "flex", gap: "2rem", justifyContent: "center", marginTop: "2rem", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", marginTop: "2rem" }}>
+            <div style={{ display: "flex", gap: "2rem", justifyContent: "center", flexWrap: "wrap" }}>
+              {[
+                { label: "Total Evaluated", val: stats.total },
+                { label: "Strong Hires", val: stats.strongHires },
+                { label: "Avg Score", val: stats.avgScore.toFixed(2) },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "center" }}>
+                  <div style={{ color: "#C8A97E", fontFamily: "'Playfair Display', serif", fontSize: "1.8rem", fontWeight: 700 }}>{s.val}</div>
+                  <div style={{ color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            
+            {/* Tombol Reset Data */}
+            <button 
+              onClick={onReset}
+              style={{
+                background: "transparent", border: "1px solid #E8835A", color: "#E8835A", padding: "0.4rem 0.8rem", borderRadius: 4, fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", cursor: "pointer", textTransform: "uppercase", marginTop: "0.5rem", transition: "all 0.3s"
+              }}
+              onMouseOver={(e) => { e.target.style.background = "#E8835A"; e.target.style.color = "#000"; }}
+              onMouseOut={(e) => { e.target.style.background = "transparent"; e.target.style.color = "#E8835A"; }}
+            >
+              ↺ Reset Data
+            </button>
+          </div>
+        )}
+
     {[
       { label: "Total Evaluated", val: stats.total },
       { label: "Strong Hires", val: stats.strongHires },
@@ -1516,6 +1543,16 @@ export default function App() {
     });
   };
 
+  const resetStats = () => {
+    if (window.confirm("Are you sure you want to reset all evaluation data history?")) {
+      const initialStats = {total:0, strongHires:0, avgScore:0, scores:[]};
+      localStorage.setItem("pulse_stats", JSON.stringify(initialStats));
+      setStats(initialStats);
+      showToast?.("Data history successfully reset!", "#74C476");
+    }
+  };
+
+  
   useEffect(() => { localStorage.setItem("pulse_tab", activeTab); }, [activeTab]);
 
   useEffect(() => {
@@ -1533,7 +1570,7 @@ export default function App() {
 const ActiveView = views[activeTab];
 const viewProps = { showToast, fireConfetti, recordEval };
 
-  if (!showApp) return <Hero onStart={() => setShowApp(true)} stats={stats} />;
+    if (!showApp) return <Hero onStart={() => setShowApp(true)} stats={stats} onReset={resetStats} />;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0D0D0D", display: "flex", flexDirection: "column" }}>
