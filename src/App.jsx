@@ -426,10 +426,10 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
           <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
             [ COMPETENCY COMPARISON CHART ]
           </div>
-          <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300}>
             <BarChart data={COMPETENCIES.map(c => ({
               name: c.short,
-              ...Object.fromEntries(savedCandidates.map(cand => [cand.name.split(" ")[0], cand.scores[c.id] || 0]))
+              ...Object.fromEntries(savedCandidates.map((cand, i) => [`${cand.name.split(" ")[0]} #${i + 1}`, cand.scores[c.id] || 0]))
             }))} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
               <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 10, fontFamily: "'DM Mono', monospace" }} axisLine={false} tickLine={false} />
@@ -437,7 +437,7 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
               <Tooltip contentStyle={{ backgroundColor: '#0D0D0D', border: '1px solid #333', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontSize: '0.75rem' }} />
               <Legend wrapperStyle={{ fontFamily: "'DM Mono', monospace", fontSize: '0.72rem' }} />
               {savedCandidates.map((cand, i) => (
-                <Bar key={cand.name} dataKey={cand.name.split(" ")[0]} fill={["#C8A97E","#74C476","#6BAED6","#9B8EC4","#E8835A"][i % 5]} radius={[3,3,0,0]} />
+                <Bar key={i} dataKey={`${cand.name.split(" ")[0]} #${i + 1}`} fill={["#C8A97E","#74C476","#6BAED6","#9B8EC4","#E8835A"][i % 5]} radius={[3,3,0,0]} />
               ))}
             </BarChart>
           </ResponsiveContainer>
