@@ -311,61 +311,61 @@ function Calculator() {
   ↺ Reset Without Saving
 </button>
 
-          {savedCandidates.length > 0 && (
-  <div style={{ marginTop: "3rem", borderTop: "1px dashed #333", paddingTop: "2rem" }}>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-      <div>
-        <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Comparison Pool</div>
-        <h3 style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", margin: "0.25rem 0 0" }}>Candidate Shortlist</h3>
-      </div>
-      <button onClick={() => setSavedCandidates([])} style={{ background: "transparent", border: "1px solid #2A2A2A", color: "#555", padding: "0.5rem 1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>
-        Clear All
-      </button>
-    </div>
-
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'DM Mono', monospace", fontSize: "0.78rem" }}>
-        <thead>
-          <tr style={{ borderBottom: "1px solid #2A2A2A" }}>
-            {["Rank", "Candidate", "Weighted Score", "Expected Salary", "Recommendation"].map(h => (
-              <th key={h} style={{ color: "#555", textAlign: "left", padding: "0.75rem 1rem", textTransform: "uppercase", fontSize: "0.65rem", letterSpacing: "0.08em" }}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {[...savedCandidates]
-            .sort((a, b) => b.score - a.score)
-            .map((c, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #1A1A1A", background: i === 0 ? "#0F1A0F" : "transparent" }}>
-                <td style={{ padding: "1rem", color: i === 0 ? "#74C476" : "#555" }}>
-                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
-                </td>
-                <td style={{ padding: "1rem", color: "#F0EAE0", fontWeight: i === 0 ? 700 : 400 }}>{c.name}</td>
-                <td style={{ padding: "1rem" }}>
-                  <span style={{ color: c.color, fontSize: "1.1rem", fontWeight: 700 }}>{c.score.toFixed(2)}</span>
-                  <span style={{ color: "#444", fontSize: "0.7rem" }}> / 5.00</span>
-                </td>
-                <td style={{ padding: "1rem", color: "#888" }}>
-                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(c.salary)}
-                </td>
-                <td style={{ padding: "1rem" }}>
-                  <span style={{ background: `${c.color}15`, border: `1px solid ${c.color}40`, color: c.color, padding: "0.3rem 0.6rem", borderRadius: 3, fontSize: "0.7rem" }}>
-                    {c.label}
-                  </span>
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+ </motion.div>
     </div>
   </div>
-}}
-        </motion.div>
-          
+
+  {savedCandidates.length > 0 && (
+    <div style={{ marginTop: "3rem", borderTop: "1px dashed #333", paddingTop: "2rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div>
+          <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase" }}>Comparison Pool</div>
+          <h3 style={{ color: "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", margin: "0.25rem 0 0" }}>Candidate Shortlist</h3>
         </div>
+        <button onClick={() => setSavedCandidates([])} style={{ background: "transparent", border: "1px solid #2A2A2A", color: "#555", padding: "0.5rem 1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>
+          Clear All
+        </button>
       </div>
-    </motion.div>
-  );
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "'DM Mono', monospace", fontSize: "0.78rem" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #2A2A2A" }}>
+              {["Rank", "Candidate", "Weighted Score", "Expected Salary", "Recommendation"].map(h => (
+                <th key={h} style={{ color: "#555", textAlign: "left", padding: "0.75rem 1rem", textTransform: "uppercase", fontSize: "0.65rem", letterSpacing: "0.08em" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[...savedCandidates]
+              .sort((a, b) => b.score - a.score)
+              .map((c, i) => (
+                <tr key={i} style={{ borderBottom: "1px solid #1A1A1A", background: i === 0 ? "#0F1A0F" : "transparent" }}>
+                  <td style={{ padding: "1rem", color: i === 0 ? "#74C476" : "#555" }}>
+                    {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`}
+                  </td>
+                  <td style={{ padding: "1rem", color: "#F0EAE0", fontWeight: i === 0 ? 700 : 400 }}>{c.name}</td>
+                  <td style={{ padding: "1rem" }}>
+                    <span style={{ color: c.color, fontSize: "1.1rem", fontWeight: 700 }}>{c.score.toFixed(2)}</span>
+                    <span style={{ color: "#444", fontSize: "0.7rem" }}> / 5.00</span>
+                  </td>
+                  <td style={{ padding: "1rem", color: "#888" }}>
+                    {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(c.salary)}
+                  </td>
+                  <td style={{ padding: "1rem" }}>
+                    <span style={{ background: `${c.color}15`, border: `1px solid ${c.color}40`, color: c.color, padding: "0.3rem 0.6rem", borderRadius: 3, fontSize: "0.7rem" }}>
+                      {c.label}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+
+</motion.div>
+);
 }
 
 // ── FUNNEL ──
