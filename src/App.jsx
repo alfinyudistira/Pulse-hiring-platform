@@ -1714,7 +1714,8 @@ Be concise, specific, and actionable. Max 200 words total.`
                   </pre>
                 </motion.div>
               )}
-</div>
+              
+              </div>
           </motion.div>
         ))}
       </div>
