@@ -252,7 +252,18 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
         <div style={{ flex: "1 1 450px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           
           <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
-            <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Technical Competencies (Hard Skills)</h3>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", margin: 0 }}>Technical Competencies (Hard Skills)</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div style={{ width: 60, height: 4, background: "#1A1A1A", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ width: `${(Object.keys(scores).length / COMPETENCIES.length) * 100}%`, height: "100%", background: allCoreFilled ? "#74C476" : "#C8A97E", transition: "width 0.3s" }} />
+                </div>
+                <span style={{ color: allCoreFilled ? "#74C476" : "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>
+                  {Object.keys(scores).length}/{COMPETENCIES.length}
+                </span>
+              </div>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.2rem" }}>
               {COMPETENCIES.map(c => (
                 <div key={c.id}>
@@ -267,7 +278,18 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
           </div>
 
           <div style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem" }}>
-            <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", marginBottom: "1.5rem" }}>Culture Fit & Soft Skills</h3>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h3 style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", textTransform: "uppercase", margin: 0 }}>Culture Fit & Soft Skills</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div style={{ width: 60, height: 4, background: "#1A1A1A", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{ width: `${(Object.keys(softScores).length / SOFT_SKILLS.length) * 100}%`, height: "100%", background: allSoftFilled ? "#74C476" : "#C8A97E", transition: "width 0.3s" }} />
+                </div>
+                <span style={{ color: allSoftFilled ? "#74C476" : "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>
+                  {Object.keys(softScores).length}/{SOFT_SKILLS.length}
+                </span>
+              </div>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.2rem" }}>
               {SOFT_SKILLS.map(c => (
                 <div key={c.id}>
@@ -1496,6 +1518,17 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem("pulse_tab", activeTab); }, [activeTab]);
 
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      const tabIds = ["calculator","funnel","salary","scorecard","di","onboarding","questions"];
+      if (e.key >= "1" && e.key <= "7") setActiveTab(tabIds[parseInt(e.key) - 1]);
+      if (e.key === "Escape") setShowApp(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const views = { calculator: Calculator, funnel: FunnelChart, salary: SalaryBench, scorecard: Scorecard, di: DIMetrics, onboarding: Onboarding, questions: QuestionBank };
 const ActiveView = views[activeTab];
 const viewProps = { showToast, fireConfetti, recordEval };
@@ -1523,6 +1556,20 @@ const viewProps = { showToast, fireConfetti, recordEval };
         <span style={{ color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>© 2025 Alfin Yudistira · Pulse Digital HR Technical Analysis</span>
         <span style={{ color: "#252525", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>Schmidt & Hunter (2016) · Bertrand & Mullainathan (2004) · McKinsey (2023)</span>
       </footer>
+
+      <div style={{ background: "#080808", borderTop: "1px solid #141414", padding: "0.4rem 2rem", display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+        {[
+          { key: "1-7", desc: "Switch tabs" },
+          { key: "P", desc: "Print/Export" },
+          { key: "R", desc: "Reset form" },
+          { key: "ESC", desc: "Go home" },
+        ].map(s => (
+          <span key={s.key} style={{ color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem" }}>
+            <span style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 3, padding: "0.1rem 0.4rem", color: "#555", marginRight: "0.4rem" }}>{s.key}</span>
+            {s.desc}
+          </span>
+        ))}
+      </div>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@400;700&display=swap');
