@@ -416,6 +416,24 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
               </div>
             )}
 
+            {/* B5: Email Draft Generator */}
+            {allFilled && (
+              <EmailDraftGenerator
+                candidateName={candidateName}
+                decision={finalDecisionLabel}
+                decisionColor={finalDecisionColor}
+                score={decision.score}
+                salary={expectedSalary}
+                strengths={[...COMPETENCIES.map(c => ({...c, score: scores[c.id]})), ...([
+                  { id: "comm", short: "Communication", score: softScores["comm"] },
+                  { id: "prob", short: "Problem Solving", score: softScores["prob"] },
+                  { id: "culture", short: "Culture Fit", score: softScores["culture"] },
+                  { id: "adapt", short: "Adaptability", score: softScores["adapt"] },
+                ])].filter(s => s.score >= 4).map(s => s.short)}
+                weaknesses={[...COMPETENCIES.map(c => ({...c, score: scores[c.id]}))].filter(s => s.score <= 2).map(s => s.short)}
+              />
+            )}
+            
             {/* Tombol Print / Download PDF */}
             <button onClick={() => window.print()} 
               style={{ width: "100%", marginTop: "1.5rem", background: "#C8A97E", border: "none", color: "#0D0D0D", padding: "0.8rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", fontWeight: "bold", textTransform: "uppercase" }}>
@@ -1766,6 +1784,90 @@ function ExecutiveBI() {
   );
 }
 
+// ── EMAIL DRAFT GENERATOR ──
+function EmailDraftGenerator({ candidateName, decision, decisionColor, score, salary, strengths, weaknesses }) {
+  const [emailType, setEmailType] = useState("offer");
+  const [loading, setLoading] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const isHire = score >= 3.5;
+
+  const formatIDR = (val) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
+
+  const generateEmail = async () => {
+    setLoading(true);
+    setDraft("");
+    setCopied(false);
+
+    const prompts = {
+      offer: `Write a professional job offer email in English for a Digital Marketing role at Pulse Digital. Candidate: ${candidateName || "the candidate"}. Score: ${score.toFixed(2)}/5.00. Salary offered: ${formatIDR(salary)}/month. Key strengths: ${strengths.join(", ") || "N/A"}. Keep it warm, professional, 150 words max. Include subject line.`,
+      rejection: `Write a professional, empathetic rejection email in English for a Digital Marketing role at Pulse Digital. Candidate: ${candidateName || "the candidate"}. Score: ${score.toFixed(2)}/5.00. Areas to improve: ${weaknesses.join(", ") || "general fit"}. Keep dignity, be encouraging, 120 words max. Include subject line.`,
+      followup: `Write a professional follow-up email in English requesting a second interview or additional assessment for a Digital Marketing role at Pulse Digital. Candidate: ${candidateName || "the candidate"}. Score: ${score.toFixed(2)}/5.00. 100 words max. Include subject line.`,
+    };
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompts[emailType] }]
+        })
+      });
+      const data = await response.json();
+      setDraft(data.content?.[0]?.text || "Failed to generate email.");
+    } catch (e) {
+      setDraft("Error generating email. Please try again.");
+    }
+    setLoading(false);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(draft);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", marginBottom: "1rem", textAlign: "left" }}>
+      <div style={{ color: "#6BAED6", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+        [ EMAIL DRAFT GENERATOR ]
+      </div>
+
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+        {[
+          { id: "offer", label: "✉️ Offer Letter", show: isHire },
+          { id: "rejection", label: "❌ Rejection", show: true },
+          { id: "followup", label: "🔄 Follow-up", show: true },
+        ].filter(t => t.show).map(t => (
+          <button key={t.id} onClick={() => { setEmailType(t.id); setDraft(""); }}
+            style={{ background: emailType === t.id ? "#6BAED6" : "#111", border: `1px solid ${emailType === t.id ? "#6BAED6" : "#333"}`, color: emailType === t.id ? "#0D0D0D" : "#888", padding: "0.5rem 0.9rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", fontWeight: emailType === t.id ? 700 : 400 }}
+          >{t.label}</button>
+        ))}
+      </div>
+
+      <button onClick={generateEmail} disabled={loading}
+        style={{ width: "100%", background: loading ? "#111" : "#1A2A3A", border: `1px solid ${loading ? "#333" : "#6BAED6"}`, color: loading ? "#555" : "#6BAED6", padding: "0.75rem", borderRadius: 4, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", marginBottom: "1rem" }}
+      >
+        {loading ? "⏳ Drafting Email..." : "✨ Generate Email Draft"}
+      </button>
+
+      {draft && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          style={{ background: "#111", border: "1px solid #6BAED644", borderRadius: 6, padding: "1.25rem" }}>
+          <pre style={{ color: "#CCC", fontSize: "0.8rem", lineHeight: 1.7, whiteSpace: "pre-wrap", fontFamily: "'DM Mono', monospace", margin: "0 0 1rem" }}>{draft}</pre>
+          <button onClick={handleCopy}
+            style={{ background: copied ? "#74C476" : "transparent", border: `1px solid ${copied ? "#74C476" : "#6BAED6"}`, color: copied ? "#0D0D0D" : "#6BAED6", padding: "0.5rem 1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", fontWeight: copied ? 700 : 400, transition: "all 0.3s" }}
+          >
+            {copied ? "✓ Copied!" : "📋 Copy Email"}
+          </button>
+        </motion.div>
+      )}
+    </div>
+  );
+}
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
 function Hero({ onStart, stats, onReset }) {
