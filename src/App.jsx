@@ -2390,10 +2390,11 @@ function EmailDraftGenerator({ candidateName, decision, decisionColor, score, sa
         })
       });
       const data = await response.json();
-      setDraft(data.content?.[0]?.text || "Failed to generate email.");
+      setDraft("RAW: " + JSON.stringify(data));
+return;
     } catch (e) {
-      setDraft("Error generating email. Please try again.");
-    }
+  setDraft("ERROR: " + e.message + " | " + JSON.stringify(e));
+}
     setLoading(false);
   };
 
