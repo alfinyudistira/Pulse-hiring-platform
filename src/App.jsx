@@ -977,14 +977,11 @@ function Scorecard() {
     setSummary("");
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-                headers: { 
-          "Content-Type": "application/json",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerously-allow-browser": "true"
-        },
+      const response = await fetch("/api/claude", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+  },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
@@ -1599,14 +1596,11 @@ const [coachLoading, setCoachLoading] = useState({});
     setCoachLoading(prev => ({ ...prev, [q.id]: true }));
     setCoachOutput(prev => ({ ...prev, [q.id]: "" }));
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-                headers: { 
-          "Content-Type": "application/json",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerously-allow-browser": "true"
-        },
+      const response = await fetch("/api/claude", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+  },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
@@ -2384,14 +2378,11 @@ function EmailDraftGenerator({ candidateName, decision, decisionColor, score, sa
     };
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-                headers: { 
-          "Content-Type": "application/json",
-          "x-api-key": import.meta.env.VITE_ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerously-allow-browser": "true"
-        },
+      const response = await fetch("/api/claude", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+  },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
