@@ -839,49 +839,115 @@ function Scorecard() {
 }
 
 
-
 // ── D&I ──
 function DIMetrics() {
-  const statusColor = { exceeded: "#74C476", met: "#C8A97E", progress: "#6BAED6", "needs-work": "#E8835A" };
-  const statusLabel = { exceeded: "✦ EXCEEDED", met: "✓ MET", progress: "↗ IN PROGRESS", "needs-work": "⚠ NEEDS WORK" };
+  const [gender, setGender] = useState(43);
+  const [bootcamp, setBootcamp] = useState(28);
+  const [apac, setApac] = useState(38);
+  const [mena, setMena] = useState(15);
+  const [blind, setBlind] = useState(100);
+
+  // Kalkulasi "Profitability & Innovation Score" berdasarkan target Pulse Digital
+  const getScore = (val, target) => Math.min(val / target, 1);
+  const avgScore = (getScore(gender, 40) + getScore(bootcamp, 20) + getScore(apac, 30) + getScore(mena, 20) + getScore(blind, 100)) / 5;
+  
+  // Max profit boost adalah 33% berdasarkan riset McKinsey
+  const profitBoost = Math.round(avgScore * 33);
+  
+  const riskLevel = avgScore < 0.6 ? "HIGH RISK" : avgScore < 0.85 ? "MODERATE" : "LOW RISK";
+  const riskColor = avgScore < 0.6 ? "#E8835A" : avgScore < 0.85 ? "#E8C35A" : "#74C476";
+
+  const metricsData = [
+    { id: 'gender', label: "Gender Diversity (Female%)", val: gender, set: setGender, target: 40, max: 100 },
+    { id: 'bootcamp', label: "Bootcamp / Alt-Education Hires", val: bootcamp, set: setBootcamp, target: 20, max: 100 },
+    { id: 'apac', label: "Geographic – APAC", val: apac, set: setApac, target: 30, max: 100 },
+    { id: 'mena', label: "Geographic – MENA", val: mena, set: setMena, target: 20, max: 100 },
+    { id: 'blind', label: "Blind Screening Adoption", val: blind, set: setBlind, target: 100, max: 100 },
+  ];
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto" }}>
-      <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 05 — Diversity & Inclusion</p>
-      <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 0.5rem" }}>D&I Metrics Dashboard</h2>
-      <p style={{ color: "#555", fontSize: "0.82rem", marginBottom: "2rem" }}>Q1 2025 Implementation · Blind Screening Pipeline Active</p>
-
-      <div style={{ display: "grid", gap: "1rem" }}>
-        {DI_METRICS.map((m, i) => {
-          const pct = Math.min((m.current / m.target) * 100, 100);
-          const color = statusColor[m.status];
-          return (
-            <div key={m.label} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1.25rem 1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
-                <span style={{ color: "#CCC", fontSize: "0.87rem" }}>{m.label}</span>
-                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                  <span style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>Target: {m.target}%</span>
-                  <span style={{ color: "#F0EAE0", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: 700 }}>{m.current}%</span>
-                  <span style={{ color, fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.05em" }}>{statusLabel[m.status]}</span>
-                </div>
-              </div>
-              <div style={{ position: "relative", height: 8, background: "#1A1A1A", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{
-                  position: "absolute", left: 0, top: 0, height: "100%",
-                  width: `${pct}%`, background: color, borderRadius: 4,
-                  transition: "width 1.2s ease",
-                  boxShadow: `0 0 8px ${color}66`
-                }} />
-                {m.target > 0 && (
-                  <div style={{ position: "absolute", left: `${Math.min(m.target, 100)}%`, top: -2, width: 2, height: 12, background: "#555" }} />
-                )}
-              </div>
-            </div>
-          );
-        })}
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ maxWidth: 1000, margin: "0 auto" }}>
+      <div style={{ marginBottom: "2rem" }}>
+        <p style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "0.5rem" }}>Module 05 — Diversity & Inclusion</p>
+        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "#F0EAE0", fontWeight: 700, margin: "0 0 1rem" }}>D&I Business Impact Simulator</h2>
+        <p style={{ color: "#888", lineHeight: 1.6, fontSize: "0.9rem", maxWidth: 750 }}>
+          Diversity is not just a PR metric; it's a measurable driver of financial performance. Adjust your company's current D&I metrics below to see how reaching Pulse Digital's target standards impacts your profitability and innovation risk.
+        </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "1rem", marginTop: "2rem" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", marginBottom: "2rem" }}>
+        
+        {/* Kiri: Interactive Sliders */}
+        <div style={{ flex: "1 1 450px", display: "grid", gap: "1.2rem" }}>
+          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+            [ ADJUST COMPANY METRICS ]
+          </div>
+          {metricsData.map(m => {
+            const isMet = m.val >= m.target;
+            const barColor = isMet ? "#74C476" : "#E8835A";
+            return (
+              <div key={m.id} style={{ background: "#111", border: "1px solid #1E1E1E", borderRadius: 6, padding: "1.25rem 1.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <span style={{ color: "#CCC", fontSize: "0.85rem" }}>{m.label}</span>
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                    <span style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}>Target: {m.target}%</span>
+                    <span style={{ color: barColor, fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: 700 }}>{m.val}%</span>
+                  </div>
+                </div>
+                <input 
+                  type="range" min="0" max={m.max} step="1" value={m.val} onChange={e => m.set(parseInt(e.target.value))} 
+                  style={{ width: "100%", accentColor: barColor, cursor: "pointer" }} 
+                />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Kanan: Real-Time Impact Meter */}
+        <div style={{ flex: "1 1 350px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          
+          <div style={{ background: "#111", border: `1px solid ${profitBoost >= 30 ? "#C8A97E" : "#1E1E1E"}`, borderRadius: 8, padding: "2rem", textAlign: "center", position: "relative", overflow: "hidden" }}>
+            {profitBoost >= 30 && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: "#C8A97E", boxShadow: "0 0 15px #C8A97E" }} />}
+            <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", textTransform: "uppercase", marginBottom: "0.5rem" }}>Projected Profitability Boost</div>
+            <div style={{ color: profitBoost >= 30 ? "#C8A97E" : "#F0EAE0", fontFamily: "'Playfair Display', serif", fontSize: "4rem", fontWeight: 700, lineHeight: 1 }}>
+              +{profitBoost}<span style={{ fontSize: "2rem", fontWeight: 400 }}>%</span>
+            </div>
+            <div style={{ color: "#555", fontSize: "0.75rem", marginTop: "0.5rem" }}>Based on McKinsey diversity data</div>
+          </div>
+
+          <div style={{ background: "#141414", border: `1px solid ${riskColor}40`, borderRadius: 8, padding: "1.5rem", textAlign: "center", transition: "all 0.3s" }}>
+            <div style={{ color: "#888", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "0.5rem" }}>Echo-Chamber & Innovation Risk</div>
+            <div style={{ color: riskColor, fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>{riskLevel}</div>
+            <div style={{ color: "#666", fontSize: "0.8rem", marginTop: "0.5rem" }}>
+              {riskLevel === "HIGH RISK" ? "Homogeneous teams miss market blind spots." : riskLevel === "MODERATE" ? "Good foundation, but lacks global perspective." : "Highly resilient and innovative workforce."}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* AI Gap Analysis Report (Buat Orang Awam/CEO) */}
+      <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem", marginBottom: "2rem" }}>
+        <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.8rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+          [ EXECUTIVE D&I GAP ANALYSIS ]
+        </div>
+        
+        <ul style={{ paddingLeft: "1.2rem", margin: 0, display: "flex", flexDirection: "column", gap: "0.8rem", color: "#AAA", fontSize: "0.85rem", lineHeight: 1.6 }}>
+          {blind < 100 && <li><strong style={{color:"#E8835A"}}>Unconscious Bias Warning:</strong> Blind screening adoption is below 100%. Your hiring managers may be inadvertently rejecting top talent based on name/university prejudice. <em>Action: Mandate blind resume reviews.</em></li>}
+          {gender < 40 && <li><strong style={{color:"#E8C35A"}}>Gender Imbalance:</strong> Female representation is at {gender}%. You are missing out on key consumer perspectives. <em>Action: Audit job descriptions for masculine-coded language.</em></li>}
+          {(apac < 30 || mena < 20) && <li><strong style={{color:"#E8C35A"}}>Geographic Concentration:</strong> Heavy reliance on local talent. <em>Action: Expand sourcing to {apac < 30 ? "APAC" : ""} {mena < 20 ? "& MENA" : ""} regions to capture emerging market insights and lower wage arbitrage.</em></li>}
+          {bootcamp < 20 && <li><strong style={{color:"#6BAED6"}}>Educational Elitism:</strong> Only {bootcamp}% of hires are from non-traditional paths (bootcamps). You are overpaying for Ivy-league/Tier-1 degrees when skills-based assessments prove bootcampers perform equally well.</li>}
+          {profitBoost >= 30 && <li style={{color: "#74C476", listStyleType: "none", marginLeft: "-1.2rem", marginTop: "0.5rem"}}>✅ <strong>Excellent Health:</strong> Your metrics align with top-quartile global companies. You are structurally positioned to outperform competitors by up to 33%.</li>}
+        </ul>
+
+        {/* Tombol Print untuk presentasi ke CEO */}
+        <button onClick={() => window.print()} style={{ width: "100%", background: "#1A1A1A", border: "1px solid #C8A97E", color: "#C8A97E", padding: "1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.85rem", fontWeight: "bold", textTransform: "uppercase", marginTop: "1.5rem", transition: "all 0.3s" }} onMouseOver={(e) => { e.target.style.background = "#C8A97E"; e.target.style.color = "#000"; }} onMouseOut={(e) => { e.target.style.background = "#1A1A1A"; e.target.style.color = "#C8A97E"; }}>
+          📄 Export D&I Impact Report for Leadership
+        </button>
+      </div>
+
+      {/* FITUR LAMA: SCIENCE & BUSINESS IMPACT (TETAP ADA) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
         <div style={{ background: "#0F1F0F", border: "1px solid #1A3A1A", borderRadius: 8, padding: "1.5rem" }}>
           <div style={{ color: "#74C476", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem", letterSpacing: "0.1em", marginBottom: "0.75rem" }}>SCIENCE BASIS</div>
           <div style={{ color: "#CCC", fontSize: "0.83rem", lineHeight: 1.7 }}>
@@ -897,9 +963,10 @@ function DIMetrics() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
+
 
 // ── ONBOARDING ──
 function Onboarding() {
