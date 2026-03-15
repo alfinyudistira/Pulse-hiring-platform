@@ -146,6 +146,31 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
   const [scores, setScores] = useState({});
   const [softScores, setSoftScores] = useState({});
   const [savedCandidates, setSavedCandidates] = useState([]);
+    // Fungsi Export ke CSV
+  const downloadCSV = () => {
+    if (savedCandidates.length === 0) {
+      showToast?.("There is no candidate data to export yet!", "#E8835A");
+      return;
+    }
+    const headers = ["Rank", "Candidate Name", "Weighted Score", "Expected Salary (IDR)", "Recommendation"];
+    const rows = savedCandidates.sort((a, b) => b.score - a.score).map((c, i) => [
+      i + 1,
+      c.name || "Anonymous",
+      c.score.toFixed(2),
+      c.salary,
+      c.label
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Pulse_Candidate_Shortlist.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast?.("Data successfully downloaded as CVS", "#74C476");
+  };
+
 
   // Tambahan Data Culture & Soft Skill
   const SOFT_SKILLS = [
