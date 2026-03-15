@@ -310,9 +310,6 @@ function Calculator() {
   style={{ width: "100%", marginTop: "0.5rem", background: "transparent", border: "1px solid #2A2A2A", color: "#555", padding: "0.75rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>
   ↺ Reset Without Saving
 </button>
-              style={{ width: "100%", marginTop: "1.5rem", background: "transparent", border: "1px solid #2A2A2A", color: "#888", padding: "0.75rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem" }}>
-              ↺ Reset Form for Next Candidate
-            </button>
 
           {savedCandidates.length > 0 && (
   <div style={{ marginTop: "3rem", borderTop: "1px dashed #333", paddingTop: "2rem" }}>
