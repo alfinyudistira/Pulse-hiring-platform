@@ -1230,6 +1230,13 @@ export default function App() {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         button:hover { opacity: 0.85; }
         input:focus, textarea:focus, select:focus { outline: 1px solid #C8A97E44; }
+@media print {
+  nav, footer, button, input[type="range"] { display: none !important; }
+  body, #root { background: #fff !important; color: #000 !important; }
+  * { font-family: Georgia, serif !important; }
+  main::before { content: "PULSE DIGITAL — HIRING INTELLIGENCE REPORT"; display: block; font-size: 0.7rem; letter-spacing: 0.2em; color: #888 !important; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+  main { padding: 0 !important; }
+}
       `}</style>
       <Analytics />
       <SpeedInsights />
