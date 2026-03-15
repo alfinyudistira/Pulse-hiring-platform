@@ -98,7 +98,7 @@ function Confetti() {
 }
 
 // ─── UTILS ───────────────────────────────────────────────────────────────────
-function getDecision(scores, weights) {
+function getDecision(scores) {
   const criticals = COMPETENCIES.filter(c => c.critical);
   const hasFailedCritical = criticals.some(c => (scores[c.id] || 0) < 3);
   const weighted = COMPETENCIES.reduce((acc, c) => acc + (scores[c.id] || 0) * c.weight, 0);
@@ -165,11 +165,11 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "Pulse_Candidate_Shortlist.csv");
+    link.setAttribute("download", "Candidate_Shortlist.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast?.("Data successfully downloaded as CVS", "#74C476");
+    showToast?.("Data successfully downloaded as CSV", "#74C476");
   };
 
 
@@ -1620,7 +1620,6 @@ function Hero({ onStart, stats, onReset }) {
             </button>
           </div>
         )}
-)}
         <div style={{ marginTop: "1rem", color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>
           by Alfin Yudistira · Pulse Digital · 2025
         </div>
@@ -1665,8 +1664,8 @@ export default function App() {
   useEffect(() => {
     const handler = (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-      const tabIds = ["calculator","funnel","salary","scorecard","di","onboarding","questions"];
-      if (e.key >= "1" && e.key <= "7") setActiveTab(tabIds[parseInt(e.key) - 1]);
+      const tabIds = ["calculator","funnel","salary","scorecard","di","onboarding","questions","bi"];
+      if (e.key >= "1" && e.key <= "8") setActiveTab(tabIds[parseInt(e.key) - 1]);
       if (e.key === "Escape") setShowApp(false);
     };
     window.addEventListener("keydown", handler);
