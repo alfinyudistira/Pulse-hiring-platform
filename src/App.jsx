@@ -983,7 +983,7 @@ function Scorecard() {
     "Content-Type": "application/json",
   },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-4-5",
           max_tokens: 1000,
           messages: [{
             role: "user",
@@ -1602,7 +1602,7 @@ const [coachLoading, setCoachLoading] = useState({});
     "Content-Type": "application/json",
   },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-4-5",
           max_tokens: 1000,
           messages: [
   {
@@ -2384,7 +2384,7 @@ function EmailDraftGenerator({ candidateName, decision, decisionColor, score, sa
     "Content-Type": "application/json",
   },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-4-5",
           max_tokens: 1000,
           messages: [{ role: "user", content: prompts[emailType] }]
         })
