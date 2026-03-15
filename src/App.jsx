@@ -399,6 +399,57 @@ function Calculator({ showToast, fireConfetti, recordEval }) {
     </div>
   )}
 
+      {savedCandidates.length >= 2 && (
+        <div style={{ marginTop: "2rem", background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem" }}>
+          <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+            [ COMPETENCY COMPARISON CHART ]
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={COMPETENCIES.map(c => ({
+              name: c.short,
+              ...Object.fromEntries(savedCandidates.map(cand => [cand.name.split(" ")[0], cand.scores[c.id] || 0]))
+            }))} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1A1A1A" vertical={false} />
+              <XAxis dataKey="name" tick={{ fill: '#666', fontSize: 10, fontFamily: "'DM Mono', monospace" }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 5]} tick={{ fill: '#444', fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ backgroundColor: '#0D0D0D', border: '1px solid #333', borderRadius: 8, fontFamily: "'DM Mono', monospace", fontSize: '0.75rem' }} />
+              <Legend wrapperStyle={{ fontFamily: "'DM Mono', monospace", fontSize: '0.72rem' }} />
+              {savedCandidates.map((cand, i) => (
+                <Bar key={cand.name} dataKey={cand.name.split(" ")[0]} fill={["#C8A97E","#74C476","#6BAED6","#9B8EC4","#E8835A"][i % 5]} radius={[3,3,0,0]} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      <div style={{ marginTop: "3rem", background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "2rem" }}>
+        <div style={{ color: "#C8A97E", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+          [ SCIENCE REFERENCE — Validity Coefficients (Schmidt & Hunter, 2016) ]
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
+          {[
+            { method: "Work Sample Tests", coef: 0.54, color: "#74C476", note: "Used in Round 2" },
+            { method: "Structured Interview", coef: 0.51, color: "#C8A97E", note: "All 3 rounds" },
+            { method: "Cognitive Ability", coef: 0.51, color: "#9B8EC4", note: "Case study proxy" },
+            { method: "Resume Screening", coef: 0.18, color: "#E8C35A", note: "Baseline only" },
+            { method: "Years of Experience", coef: 0.16, color: "#E8835A", note: "Not predictive" },
+            { method: "Reference Checks", coef: 0.26, color: "#6BAED6", note: "Supplementary" },
+          ].map(d => (
+            <div key={d.method} style={{ background: "#111", border: `1px solid ${d.color}22`, borderRadius: 6, padding: "1.25rem", textAlign: "center" }}>
+              <div style={{ color: d.color, fontFamily: "'Playfair Display', serif", fontSize: "2rem", fontWeight: 700 }}>{d.coef}</div>
+              <div style={{ color: "#DDD", fontSize: "0.78rem", fontWeight: 500, margin: "0.4rem 0 0.25rem" }}>{d.method}</div>
+              <div style={{ color: "#555", fontFamily: "'DM Mono', monospace", fontSize: "0.62rem" }}>{d.note}</div>
+              <div style={{ marginTop: "0.75rem", height: 4, background: "#1A1A1A", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ width: `${d.coef * 100}%`, height: "100%", background: d.color, borderRadius: 2 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: "1rem", color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem", textAlign: "center" }}>
+          Validity coefficient = correlation between selection method and actual job performance (0 = none, 1 = perfect)
+        </div>
+      </div
+        
 </motion.div>
 );
 }
