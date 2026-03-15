@@ -122,17 +122,53 @@ function NavBar({ active, setActive }) {
     { id: "questions", label: "Question Bank", icon: "💬" },
     { id: "bi", label: "Executive BI", icon: "📈" },
   ];
+
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const navRef = useRef(null);
+  const buttonRefs = useRef({});
+
+  useEffect(() => {
+    const activeBtn = buttonRefs.current[active];
+    if (activeBtn && navRef.current) {
+      const navRect = navRef.current.getBoundingClientRect();
+      const btnRect = activeBtn.getBoundingClientRect();
+      setIndicatorStyle({
+        left: btnRect.left - navRect.left + navRef.current.scrollLeft,
+        width: btnRect.width,
+      });
+    }
+  }, [active]);
+
   return (
-    <nav style={{ background: "#0D0D0D", borderBottom: "1px solid #2A2A2A", padding: "0 2rem", display: "flex", gap: "0.25rem", overflowX: "auto", flexShrink: 0 }}>
+    <nav ref={navRef} style={{ background: "#0D0D0D", borderBottom: "1px solid #2A2A2A", padding: "0 2rem", display: "flex", gap: "0.25rem", overflowX: "auto", flexShrink: 0, position: "relative" }}>
+      {/* Animated sliding indicator */}
+      <motion.div
+        animate={{ left: indicatorStyle.left, width: indicatorStyle.width }}
+        transition={{ type: "spring", stiffness: 400, damping: 35 }}
+        style={{ position: "absolute", bottom: 0, height: 2, background: "#C8A97E", borderRadius: 2, boxShadow: "0 0 8px #C8A97E88" }}
+      />
       {tabs.map(t => (
-        <button key={t.id} onClick={() => setActive(t.id)} style={{
-          background: active === t.id ? "#1A1A1A" : "transparent",
-          border: "none", borderBottom: active === t.id ? "2px solid #C8A97E" : "2px solid transparent",
-          color: active === t.id ? "#C8A97E" : "#666", padding: "1rem 1.25rem",
-          cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.72rem",
-          letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap",
-          transition: "all 0.2s"
-        }}>
+        <button
+          key={t.id}
+          ref={el => buttonRefs.current[t.id] = el}
+          onClick={() => setActive(t.id)}
+          style={{
+            background: active === t.id ? "#1A1A1A" : "transparent",
+            border: "none",
+            borderBottom: "2px solid transparent",
+            color: active === t.id ? "#C8A97E" : "#666",
+            padding: "1rem 1.25rem",
+            cursor: "pointer",
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "0.72rem",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+            transition: "color 0.2s, background 0.2s",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
           {t.icon} {t.label}
         </button>
       ))}
@@ -866,6 +902,43 @@ function Scorecard() {
   const decision = getDecision(scores);
   const allFilled = COMPETENCIES.every(c => scores[c.id] !== undefined);
   const handlePrint = () => window.print();
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summary, setSummary] = useState("");
+
+  const generateSummary = async () => {
+    const filledNotes = COMPETENCIES
+      .filter(c => notes[c.id] && notes[c.id].trim())
+      .map(c => `${c.label} (Score: ${scores[c.id] || 0}/5): ${notes[c.id]}`)
+      .join("\n");
+
+    if (!filledNotes) {
+      setSummary("⚠️ No notes found. Add notes using the 📝 button on each competency first.");
+      return;
+    }
+
+    setSummaryLoading(true);
+    setSummary("");
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `You are an HR professional. Based on these interview notes, write a concise 3-paragraph candidate summary suitable for a hiring committee email. Be professional, specific, and objective. Candidate: ${candidate || "Anonymous"}. Round: ${round}.\n\nNotes:\n${filledNotes}\n\nWrite the summary in English, professional tone, max 150 words total.`
+          }]
+        })
+      });
+      const data = await response.json();
+      setSummary(data.content?.[0]?.text || "Failed to generate summary.");
+    } catch (e) {
+      setSummary("Error generating summary. Please try again.");
+    }
+    setSummaryLoading(false);
+  };
 
   // Structured Rubric Intelligence (Dari PDF Interview Scoring Rubric)
   const getRubricText = (compId, score) => {
@@ -1062,6 +1135,35 @@ function Scorecard() {
         </motion.div>
       )}
 
+      {/* B4: Smart Notes Summary */}
+      <div style={{ background: "#0A0A0A", border: "1px solid #1E1E1E", borderRadius: 8, padding: "1.5rem", marginBottom: "1rem" }}>
+        <div style={{ color: "#9B8EC4", fontFamily: "'DM Mono', monospace", fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1rem", borderBottom: "1px solid #222", paddingBottom: "0.5rem" }}>
+          [ AI NOTES SUMMARIZER ]
+        </div>
+        <p style={{ color: "#666", fontSize: "0.8rem", marginBottom: "1rem" }}>
+          Add notes via 📝 on each competency above, then generate a committee-ready summary.
+        </p>
+        <button
+          onClick={generateSummary}
+          disabled={summaryLoading}
+          style={{ background: summaryLoading ? "#1A1A1A" : "#9B8EC4", border: "none", color: summaryLoading ? "#555" : "#0D0D0D", padding: "0.75rem 1.5rem", borderRadius: 4, cursor: summaryLoading ? "not-allowed" : "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", marginBottom: "1rem", width: "100%" }}
+        >
+          {summaryLoading ? "⏳ Generating Summary..." : "✨ Generate AI Committee Summary"}
+        </button>
+        {summary && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            style={{ background: "#111", border: "1px solid #9B8EC444", borderRadius: 6, padding: "1.25rem" }}>
+            <div style={{ color: "#AAA", fontSize: "0.85rem", lineHeight: 1.7, whiteSpace: "pre-wrap", marginBottom: "1rem" }}>{summary}</div>
+            <button
+              onClick={() => { navigator.clipboard.writeText(summary); }}
+              style={{ background: "transparent", border: "1px solid #9B8EC4", color: "#9B8EC4", padding: "0.5rem 1rem", borderRadius: 4, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: "0.7rem" }}
+            >
+              📋 Copy to Clipboard
+            </button>
+          </motion.div>
+        )}
+      </div>
+      
       <button onClick={handlePrint} style={{
         background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 4, width: "100%",
         color: "#888", padding: "1rem", fontFamily: "'DM Mono', monospace",
