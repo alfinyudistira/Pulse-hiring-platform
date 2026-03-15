@@ -1431,7 +1431,7 @@ function QuestionBank() {
 }
 
 // ─── HERO ─────────────────────────────────────────────────────────────────────
-function Hero({ onStart, stats }) {
+function Hero({ onStart, stats, onReset }) {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center",
@@ -1501,18 +1501,6 @@ function Hero({ onStart, stats }) {
             </button>
           </div>
         )}
-
-    {[
-      { label: "Total Evaluated", val: stats.total },
-      { label: "Strong Hires", val: stats.strongHires },
-      { label: "Avg Score", val: stats.avgScore.toFixed(2) },
-    ].map(s => (
-      <div key={s.label} style={{ textAlign: "center" }}>
-        <div style={{ color: "#C8A97E", fontFamily: "'Playfair Display', serif", fontSize: "1.8rem", fontWeight: 700 }}>{s.val}</div>
-        <div style={{ color: "#444", fontFamily: "'DM Mono', monospace", fontSize: "0.6rem", textTransform: "uppercase" }}>{s.label}</div>
-      </div>
-    ))}
-  </div>
 )}
         <div style={{ marginTop: "1rem", color: "#333", fontFamily: "'DM Mono', monospace", fontSize: "0.65rem" }}>
           by Alfin Yudistira · Pulse Digital · 2025
