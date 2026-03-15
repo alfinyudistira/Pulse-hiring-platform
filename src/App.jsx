@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
 
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -697,10 +697,9 @@ function SalaryBench() {
   // State untuk Simulator (Sinkron dengan data yang dipilih)
   const [offeredSalary, setOfferedSalary] = useState(data[1]);
 
-  // Update slider otomatis kalau tombol IDR/USD atau exp diganti
-  useEffect(() => {
-    setOfferedSalary(data[1]);
-  }, [currency, exp, data]);
+useEffect(() => {
+    setOfferedSalary(SALARY_DATA[currency][exp][1]);
+  }, [currency, exp]);
 
   // Logika dinamis ngikutin persentil IDR/USD
   const getMetrics = (val) => {
